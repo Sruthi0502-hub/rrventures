@@ -167,10 +167,79 @@ function removeAd(index) {
 }
 
 function initCustomizationPage() {
-  const form = document.getElementById('customizationForm');
-  form?.addEventListener('submit', (event) => {
+  const saveBtn = document.getElementById('saveBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const notification = document.getElementById('notification');
+  const descriptionInput = document.getElementById('companyDescription');
+  const descriptionCount = document.getElementById('descriptionCount');
+
+  const initialValues = {
+    companyName: document.getElementById('companyName').value,
+    companyEmail: document.getElementById('companyEmail').value,
+    companyDescription: descriptionInput.value,
+    contactPhone: document.getElementById('contactPhone').value,
+    contactAddress: document.getElementById('contactAddress').value,
+    footerText: document.getElementById('footerText').value
+  };
+
+  const updateCharCount = () => {
+    descriptionCount.textContent = descriptionInput.value.length;
+  };
+  updateCharCount();
+  descriptionInput?.addEventListener('input', updateCharCount);
+
+  const showNotification = (message, type = 'success') => {
+    notification.className = `notification active notification-${type}`;
+    const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+    notification.innerHTML = `<i data-lucide="${icon}"></i><span>${message}</span>`;
+    if (window.lucide) lucide.replace({ width: 18, height: 18 });
+    setTimeout(() => {
+      notification.classList.remove('active');
+    }, 4000);
+  };
+
+  const validateForm = () => {
+    const companyName = document.getElementById('companyName').value.trim();
+    const companyEmail = document.getElementById('companyEmail').value.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!companyName) {
+      showNotification('Company name is required.', 'error');
+      return false;
+    }
+    if (!companyEmail) {
+      showNotification('Company email is required.', 'error');
+      return false;
+    }
+    if (!emailRegex.test(companyEmail)) {
+      showNotification('Please enter a valid email address.', 'error');
+      return false;
+    }
+    return true;
+  };
+
+  saveBtn?.addEventListener('click', (event) => {
     event.preventDefault();
-    alert('Settings saved. Backend integration placeholder set for future API sync.');
+    if (validateForm()) {
+      initialValues.companyName = document.getElementById('companyName').value;
+      initialValues.companyEmail = document.getElementById('companyEmail').value;
+      initialValues.companyDescription = document.getElementById('companyDescription').value;
+      initialValues.contactPhone = document.getElementById('contactPhone').value;
+      initialValues.contactAddress = document.getElementById('contactAddress').value;
+      initialValues.footerText = document.getElementById('footerText').value;
+      showNotification('Content settings saved successfully! Backend sync pending.');
+    }
+  });
+
+  resetBtn?.addEventListener('click', () => {
+    document.getElementById('companyName').value = initialValues.companyName;
+    document.getElementById('companyEmail').value = initialValues.companyEmail;
+    document.getElementById('companyDescription').value = initialValues.companyDescription;
+    document.getElementById('contactPhone').value = initialValues.contactPhone;
+    document.getElementById('contactAddress').value = initialValues.contactAddress;
+    document.getElementById('footerText').value = initialValues.footerText;
+    updateCharCount();
+    showNotification('Form reset to last saved values.');
   });
 }
 
