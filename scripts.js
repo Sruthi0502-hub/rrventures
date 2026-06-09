@@ -85,6 +85,23 @@ function renderServiceRows(services) {
   const tableBody = document.getElementById('serviceRows');
   if (!tableBody) return;
   tableBody.innerHTML = '';
+  
+  if (services.length === 0) {
+    tableBody.innerHTML = `
+      <tr><td colspan="5" class="table-empty">
+        <div class="empty-state">
+          <div class="empty-state-icon">📋</div>
+          <h3>No services found</h3>
+          <p>Create your first service to get started managing your offerings.</p>
+          <button class="btn btn-primary icon-btn" onclick="document.getElementById('openServiceModal')?.click()">
+            <i data-lucide="plus"></i>Add Service
+          </button>
+        </div>
+      </td></tr>
+    `;
+    return;
+  }
+  
   services.forEach((service) => {
     const row = document.createElement('tr');
     row.innerHTML = `
@@ -141,6 +158,21 @@ function renderAdCards(ads) {
   const adGrid = document.getElementById('adGrid');
   if (!adGrid) return;
   adGrid.innerHTML = '';
+  
+  if (ads.length === 0) {
+    adGrid.innerHTML = `
+      <div class="empty-state" style="grid-column: 1/-1; min-height: 300px;">
+        <div class="empty-state-icon">📢</div>
+        <h3>No advertisements yet</h3>
+        <p>Create your first advertisement campaign to get started.</p>
+        <button class="btn btn-primary icon-btn" onclick="document.getElementById('newAdForm')?.scrollIntoView({behavior: 'smooth'})">
+          <i data-lucide="plus"></i>Create Ad
+        </button>
+      </div>
+    `;
+    return;
+  }
+  
   ads.forEach((ad, index) => {
     const card = document.createElement('article');
     card.className = 'ad-card';

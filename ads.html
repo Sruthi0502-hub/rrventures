@@ -5,21 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RRventures Admin | Advertisements</title>
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/lucide.min.js"></script>
 </head>
 <body data-page="ads">
-  <div class="app-shell">
-    <aside class="sidebar">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="app-shell" role="application">
+    <aside class="sidebar" id="sidebar" aria-label="Navigation" role="navigation">
       <a href="dashboard.html" class="brand-sm">RRventures</a>
-      <nav class="side-nav">
-        <a href="dashboard.html">Overview</a>
-        <a href="services.html">Services</a>
-        <a href="ads.html" class="active">Advertisements</a>
-        <a href="customization.html">Customization</a>
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="sidebar-nav">
+        <i data-lucide="menu"></i>
+      </button>
+      <nav class="side-nav" id="sidebar-nav">
+        <a href="dashboard.html"><i data-lucide="home"></i>Overview</a>
+        <a href="services.html"><i data-lucide="tool"></i>Services</a>
+        <a href="ads.html" class="active"><i data-lucide="megaphone"></i>Advertisements</a>
+        <a href="customization.html"><i data-lucide="sliders-horizontal"></i>Customization</a>
       </nav>
       <div class="sidebar-footer">Create compelling ads with strong visuals and messaging.</div>
     </aside>
 
-    <main class="main-area">
+    <main class="main-area" id="main-content" role="main">
       <div class="page-heading">
         <div>
           <h1>Ads Management</h1>
@@ -55,5 +60,25 @@
   </div>
 
   <script src="scripts.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.replace({ width: 20, height: 20 });
+      const sidebarToggle = document.getElementById('sidebarToggle');
+      const sidebar = document.getElementById('sidebar');
+      sidebarToggle?.addEventListener('click', () => {
+        sidebar.classList.toggle('mobile-open');
+        const isOpen = sidebar.classList.contains('mobile-open');
+        sidebarToggle.setAttribute('aria-expanded', isOpen);
+        document.body.classList.toggle('sidebar-open', isOpen);
+      });
+      document.addEventListener('click', (e) => {
+        if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+          sidebar.classList.remove('mobile-open');
+          sidebarToggle.setAttribute('aria-expanded', 'false');
+          document.body.classList.remove('sidebar-open');
+        }
+      });
+    });
+  </script>
 </body>
 </html>

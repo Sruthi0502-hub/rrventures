@@ -8,10 +8,14 @@
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/lucide.min.js"></script>
 </head>
 <body data-page="customization">
-  <div class="app-shell">
-    <aside class="sidebar">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="app-shell" role="application">
+    <aside class="sidebar" id="sidebar" aria-label="Navigation" role="navigation">
       <a href="dashboard.html" class="brand-sm">RRventures</a>
-      <nav class="side-nav">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="sidebar-nav">
+        <i data-lucide="menu"></i>
+      </button>
+      <nav class="side-nav" id="sidebar-nav">
         <a href="dashboard.html"><i data-lucide="home"></i>Overview</a>
         <a href="services.html"><i data-lucide="tool"></i>Services</a>
         <a href="ads.html"><i data-lucide="megaphone"></i>Advertisements</a>
@@ -20,7 +24,7 @@
       <div class="sidebar-footer">Update company identity and footer details with ease.</div>
     </aside>
 
-    <main class="main-area">
+      <main class="main-area" id="main-content" role="main">
       <div class="page-heading">
         <div>
           <h1>Content Management</h1>
@@ -136,6 +140,21 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       if (window.lucide) lucide.replace({ width: 20, height: 20 });
+      const sidebarToggle = document.getElementById('sidebarToggle');
+      const sidebar = document.getElementById('sidebar');
+      sidebarToggle?.addEventListener('click', () => {
+        sidebar.classList.toggle('mobile-open');
+        const isOpen = sidebar.classList.contains('mobile-open');
+        sidebarToggle.setAttribute('aria-expanded', isOpen);
+        document.body.classList.toggle('sidebar-open', isOpen);
+      });
+      document.addEventListener('click', (e) => {
+        if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+          sidebar.classList.remove('mobile-open');
+          sidebarToggle.setAttribute('aria-expanded', 'false');
+          document.body.classList.remove('sidebar-open');
+        }
+      });
     });
   </script>
 </body>

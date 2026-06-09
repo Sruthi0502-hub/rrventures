@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body data-page="login">
-  <div class="auth-shell">
+  <div class="auth-shell" role="application">
     <div class="auth-panel">
       <div class="brand-block">
         <div class="brand-mark">RR</div>
@@ -21,7 +21,7 @@
         <h2>Welcome back</h2>
         <p>Sign in to continue managing services, ads, and settings.</p>
 
-        <form id="loginForm" class="form-grid">
+        <form id="loginForm" class="form-grid" aria-label="Login form">
           <label>
             Email
             <input type="email" id="loginEmail" placeholder="you@company.com" required />
