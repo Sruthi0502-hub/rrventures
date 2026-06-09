@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RRventures Admin | Signup</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-page="signup">
+  <div class="auth-shell">
+    <div class="auth-panel">
+      <div class="brand-block">
+        <div class="brand-mark">RR</div>
+        <div>
+          <h1>RRventures Admin</h1>
+          <p>Create your team account and start configuring your admin workspace.</p>
+        </div>
+      </div>
+
+      <div class="auth-card">
+        <h2>Start your account</h2>
+        <p>Build secure access for RRventures staff with an elegant onboarding experience.</p>
+
+        <form id="signupForm" class="form-grid">
+          <label>
+            Full name
+            <input type="text" id="signupName" placeholder="Alex Morgan" required />
+          </label>
+          <label>
+            Work email
+            <input type="email" id="signupEmail" placeholder="you@company.com" required />
+          </label>
+          <label>
+            Password
+            <input type="password" id="signupPassword" placeholder="Create a strong password" required />
+          </label>
+
+          <button type="submit" class="btn btn-primary">Create Account</button>
+        </form>
+
+        <p class="form-note">
+          Already a member? <a href="index.html">Log in</a>
+        </p>
+      </div>
+    </div>
+
+    <div class="auth-visual">
+      <div class="visual-card">
+        <div class="visual-tag">Team Ready</div>
+        <h3>Onboard the RRventures admin experience with secure credentials.</h3>
+        <p>Your dashboard is fully responsive and built for modern management workflows.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="scripts.js"></script>
+</body>
+</html>

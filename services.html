@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RRventures Admin | Services</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/lucide.min.js"></script>
+</head>
+<body data-page="services">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a href="dashboard.html" class="brand-sm">RRventures</a>
+      <nav class="side-nav">
+        <a href="dashboard.html">Overview</a>
+        <a href="services.html" class="active">Services</a>
+        <a href="ads.html">Advertisements</a>
+        <a href="customization.html">Customization</a>
+      </nav>
+      <div class="sidebar-footer">Organize every service with clarity and speed.</div>
+    </aside>
+
+    <main class="main-area">
+      <div class="page-heading">
+        <div>
+          <h1>Services Management</h1>
+          <p>Manage all active offerings, update statuses, and add new service packages.</p>
+        </div>
+        <button id="openServiceModal" class="btn btn-primary icon-btn"><i data-lucide="plus-circle"></i><span>Add Service</span></button>
+      </div>
+
+      <div class="controls-row controls-grid">
+        <div class="search-group">
+          <label class="input-label" for="serviceSearch">Search services</label>
+          <input id="serviceSearch" class="filter-input" type="search" placeholder="Search by name or description" />
+        </div>
+        <div class="search-group">
+          <label class="input-label" for="statusFilter">Filter by status</label>
+          <select id="statusFilter" class="filter-input">
+            <option value="All">All statuses</option>
+            <option value="Active">Active</option>
+            <option value="Paused">Paused</option>
+            <option value="Draft">Draft</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Service Name</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Date Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="serviceRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="serviceModal" class="modal-backdrop">
+    <div class="modal-window">
+      <h3>Add new service</h3>
+      <form id="newServiceForm" class="form-grid">
+        <label>
+          Service Name
+          <input type="text" id="serviceName" placeholder="Brand strategy" required />
+        </label>
+        <label>
+          Description
+          <textarea id="serviceDescription" placeholder="Describe the offering in one or two sentences." required></textarea>
+        </label>
+        <label>
+          Status
+          <select id="serviceStatus">
+            <option>Active</option>
+            <option>Paused</option>
+          </select>
+        </label>
+        <div class="modal-footer">
+          <button type="button" id="closeServiceModal" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Service</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="scripts.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.replace({ width: 18, height: 18 });
+    });
+  </script>
+</body>
+</html>

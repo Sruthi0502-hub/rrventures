@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RRventures Admin | Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/lucide.min.js"></script>
+</head>
+<body data-page="dashboard">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a href="dashboard.html" class="brand-sm">RRventures</a>
+      <nav class="side-nav">
+        <a href="dashboard.html" class="active"><i data-lucide="home"></i>Overview</a>
+        <a href="services.html"><i data-lucide="tool"></i>Services</a>
+        <a href="ads.html"><i data-lucide="megaphone"></i>Advertisements</a>
+        <a href="customization.html"><i data-lucide="sliders-horizontal"></i>Customization</a>
+      </nav>
+      <div class="sidebar-footer">Premium admin experience for modern teams.</div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="topbar-title">
+          <h1>Dashboard</h1>
+          <p>Welcome back, Admin. Your RRventures workspace is ready.</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-secondary icon-btn"><i data-lucide="upload-cloud"></i><span>Upload</span></button>
+          <div class="profile-pill">
+            <div class="profile-ring">R</div>
+            <div>
+              <span>RRventures</span>
+              <small>Admin User</small>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="grid-columns dashboard-cards">
+        <article class="stat-card">
+          <div class="stat-header">
+            <div>
+              <p>Total Services</p>
+              <h2>42</h2>
+            </div>
+            <div class="card-icon"><i data-lucide="layers"></i></div>
+          </div>
+          <span>Updated today</span>
+        </article>
+        <article class="stat-card">
+          <div class="stat-header">
+            <div>
+              <p>Total Ads</p>
+              <h2>128</h2>
+            </div>
+            <div class="card-icon"><i data-lucide="megaphone"></i></div>
+          </div>
+          <span>Active in last 30 days</span>
+        </article>
+        <article class="stat-card">
+          <div class="stat-header">
+            <div>
+              <p>Active Ads</p>
+              <h2>76</h2>
+            </div>
+            <div class="card-icon"><i data-lucide="play-circle"></i></div>
+          </div>
+          <span>Running across channels</span>
+        </article>
+        <article class="stat-card">
+          <div class="stat-header">
+            <div>
+              <p>Total Users</p>
+              <h2>9.8K</h2>
+            </div>
+            <div class="card-icon"><i data-lucide="users"></i></div>
+          </div>
+          <span>Visitors and clients</span>
+        </article>
+      </section>
+
+      <section class="grid-columns analytics-grid">
+        <article class="panel-card analytics-card">
+          <div class="panel-header">
+            <h2>Performance overview</h2>
+            <button class="btn btn-tertiary">View Report</button>
+          </div>
+          <div class="chart-placeholder">
+            <span>Analytics chart placeholder</span>
+          </div>
+        </article>
+        <article class="panel-card insights-card">
+          <h2>Quick insights</h2>
+          <ul class="insights-list">
+            <li>Revenue growth is steady at 18% month-over-month.</li>
+            <li>Ad engagement rose 12% after last optimization.</li>
+            <li>New service signups increased by 9%.</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="panel-card activity-card">
+        <div class="panel-header">
+          <h2>Recent activity</h2>
+          <a href="services.html" class="link-secondary">View all activity</a>
+        </div>
+        <div class="activity-list">
+          <div class="activity-item">
+            <div>
+              <strong>Service listing updated</strong>
+              <p>Marketing page service details refreshed.</p>
+            </div>
+            <span>2h ago</span>
+          </div>
+          <div class="activity-item">
+            <div>
+              <strong>Advertisement launched</strong>
+              <p>New summer promotion campaign is live.</p>
+            </div>
+            <span>5h ago</span>
+          </div>
+          <div class="activity-item">
+            <div>
+              <strong>Brand settings saved</strong>
+              <p>Footer text and company description were updated.</p>
+            </div>
+            <span>Yesterday</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="scripts.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.replace({ width: 20, height: 20 });
+    });
+  </script>
+</body>
+</html>

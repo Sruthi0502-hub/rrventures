@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RRventures Admin | Advertisements</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-page="ads">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a href="dashboard.html" class="brand-sm">RRventures</a>
+      <nav class="side-nav">
+        <a href="dashboard.html">Overview</a>
+        <a href="services.html">Services</a>
+        <a href="ads.html" class="active">Advertisements</a>
+        <a href="customization.html">Customization</a>
+      </nav>
+      <div class="sidebar-footer">Create compelling ads with strong visuals and messaging.</div>
+    </aside>
+
+    <main class="main-area">
+      <div class="page-heading">
+        <div>
+          <h1>Ads Management</h1>
+          <p>Publish campaigns, preview creative, and keep ads updated in a polished layout.</p>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <h2>Add new advertisement</h2>
+        <form id="newAdForm" class="form-grid">
+          <label>
+            Upload Image URL
+            <input id="adImage" type="url" placeholder="https://example.com/image.jpg" required />
+          </label>
+          <div id="imagePreview" class="ad-media">Image preview</div>
+          <label>
+            Title <span class="text-muted">(max 30 chars)</span>
+            <input id="adTitle" type="text" maxlength="30" placeholder="Summer Launch" required />
+          </label>
+          <label>
+            Description
+            <textarea id="adDescription" placeholder="A short message for the ad campaign." required></textarea>
+          </label>
+          <button type="submit" class="btn btn-primary">Create Advertisement</button>
+        </form>
+      </div>
+
+      <div class="cards-panel">
+        <h2>Advertisement preview</h2>
+        <div id="adGrid" class="card-grid"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="scripts.js"></script>
+</body>
+</html>

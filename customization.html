@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RRventures Admin | Customization</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-page="customization">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a href="dashboard.html" class="brand-sm">RRventures</a>
+      <nav class="side-nav">
+        <a href="dashboard.html">Overview</a>
+        <a href="services.html">Services</a>
+        <a href="ads.html">Advertisements</a>
+        <a href="customization.html" class="active">Customization</a>
+      </nav>
+      <div class="sidebar-footer">Update company identity and footer details with ease.</div>
+    </aside>
+
+    <main class="main-area">
+      <div class="page-heading">
+        <div>
+          <h1>Customization</h1>
+          <p>Set the company name, website description, and footer content for your SaaS experience.</p>
+        </div>
+      </div>
+
+      <div class="setting-card panel-card">
+        <form id="customizationForm" class="form-grid">
+          <div class="setting-group">
+            <label>
+              Company Name
+              <input type="text" id="companyName" placeholder="RRventures" value="RRventures" required />
+            </label>
+            <label>
+              Website Description
+              <textarea id="companyDescription" placeholder="A premium marketing and service platform for modern businesses.">A premium marketing and service platform for modern businesses.</textarea>
+            </label>
+            <label>
+              Footer Text
+              <input type="text" id="footerText" placeholder="© 2026 RRventures. All rights reserved." value="© 2026 RRventures. All rights reserved." />
+            </label>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script src="scripts.js"></script>
+</body>
+</html>
