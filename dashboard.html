@@ -20,6 +20,7 @@
         <a href="services.html"><i data-lucide="tool"></i>Services</a>
         <a href="ads.html"><i data-lucide="megaphone"></i>Advertisements</a>
         <a href="customization.html"><i data-lucide="sliders-horizontal"></i>Customization</a>
+        <a href="logout.html"><i data-lucide="log-out"></i>Logout</a>
       </nav>
       <div class="sidebar-footer">Premium admin experience for modern teams.</div>
     </aside>
@@ -31,7 +32,7 @@
           <p>Welcome back, Admin. Your RRventures workspace is ready.</p>
         </div>
         <div class="topbar-actions">
-          <button class="btn btn-secondary icon-btn"><i data-lucide="upload-cloud"></i><span>Upload</span></button>
+          <button class="btn btn-secondary icon-btn" onclick="window.location.href='logout.html'" type="button"><i data-lucide="log-out"></i><span>Logout</span></button>
           <div class="profile-pill">
             <div class="profile-ring">R</div>
             <div>
@@ -47,27 +48,27 @@
           <div class="stat-header">
             <div>
               <p>Total Services</p>
-              <h2>42</h2>
+              <h2 id="totalServicesCount">0</h2>
             </div>
             <div class="card-icon"><i data-lucide="layers"></i></div>
           </div>
-          <span>Updated today</span>
+          <span id="servicesUpdatedLabel">Updated today</span>
         </article>
         <article class="stat-card">
           <div class="stat-header">
             <div>
               <p>Total Ads</p>
-              <h2>128</h2>
+              <h2 id="totalAdsCount">0</h2>
             </div>
             <div class="card-icon"><i data-lucide="megaphone"></i></div>
           </div>
-          <span>Active in last 30 days</span>
+          <span id="adsActiveLabel">Active in last 30 days</span>
         </article>
         <article class="stat-card">
           <div class="stat-header">
             <div>
               <p>Active Ads</p>
-              <h2>76</h2>
+              <h2 id="activeAdsCount">0</h2>
             </div>
             <div class="card-icon"><i data-lucide="play-circle"></i></div>
           </div>
@@ -76,12 +77,12 @@
         <article class="stat-card">
           <div class="stat-header">
             <div>
-              <p>Total Users</p>
-              <h2>9.8K</h2>
+              <p>Current Team</p>
+              <h2 id="teamSize">1</h2>
             </div>
             <div class="card-icon"><i data-lucide="users"></i></div>
           </div>
-          <span>Visitors and clients</span>
+          <span>Active administrators</span>
         </article>
       </section>
 

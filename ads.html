@@ -20,6 +20,7 @@
         <a href="services.html"><i data-lucide="tool"></i>Services</a>
         <a href="ads.html" class="active"><i data-lucide="megaphone"></i>Advertisements</a>
         <a href="customization.html"><i data-lucide="sliders-horizontal"></i>Customization</a>
+        <a href="logout.html"><i data-lucide="log-out"></i>Logout</a>
       </nav>
       <div class="sidebar-footer">Create compelling ads with strong visuals and messaging.</div>
     </aside>
@@ -32,9 +33,17 @@
         </div>
       </div>
 
+      <div class="controls-row controls-grid">
+        <div class="search-group">
+          <label class="input-label" for="adSearch">Search ads</label>
+          <input id="adSearch" class="filter-input" type="search" placeholder="Search by title or description" />
+        </div>
+      </div>
+
       <div class="panel-card">
         <h2>Add new advertisement</h2>
         <form id="newAdForm" class="form-grid">
+          <input type="hidden" id="currentAdIndex" value="" />
           <label>
             Upload Image URL
             <input id="adImage" type="url" placeholder="https://example.com/image.jpg" required />

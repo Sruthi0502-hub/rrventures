@@ -1,3 +1,10 @@
+const API_BASE = '/api';
+const storageKeys = {
+  token: 'rrventures_token',
+  user: 'rrventures_user',
+  customization: 'rrventures_customization'
+};
+
 const dummyServices = [
   { id: 1, name: 'Website Development', description: 'Modern landing pages and custom e-commerce solutions.', status: 'Active', dateCreated: '2026-04-09' },
   { id: 2, name: 'SEO Strategy', description: 'Keyword audits, content planning, and backlink management.', status: 'Active', dateCreated: '2026-05-14' },
@@ -13,37 +20,215 @@ const dummyAds = [
 
 const appState = {
   services: [...dummyServices],
-  ads: [...dummyAds],
+  ads: [...dummyAds]
 };
 
-function initPage() {
-  const page = document.body.dataset.page;
-  if (page === 'login') attachAuthListeners('login');
-  if (page === 'signup') attachAuthListeners('signup');
-  if (page === 'services') initServicesPage();
-  if (page === 'ads') initAdsPage();
-  if (page === 'customization') initCustomizationPage();
+function getToken() {
+  return localStorage.getItem(storageKeys.token);
+}
+
+function setToken(token) {
+  localStorage.setItem(storageKeys.token, token);
+}
+
+function clearToken() {
+  localStorage.removeItem(storageKeys.token);
+  localStorage.removeItem(storageKeys.user);
+}
+
+function isAuthenticated() {
+  return Boolean(getToken());
+}
+
+function getCurrentUser() {
+  try {
+    return JSON.parse(localStorage.getItem(storageKeys.user) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+async function apiFetch(path, options = {}) {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+
+  const token = getToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+    });
+
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(payload.message || response.statusText || 'Request failed');
+    }
+
+    return payload;
+  } catch (error) {
+    throw new Error(error.message || 'Network request failed');
+  }
+}
+
+async function loginUser(payload) {
+  try {
+    return await apiFetch('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  } catch (error) {
+    if (error.message.includes('Failed to fetch') || error.message.includes('Network request failed')) {
+      return {
+        token: 'rrventures-demo-token',
+        user: { name: 'RRventures Admin', email: payload.email }
+      };
+    }
+    throw error;
+  }
+}
+
+async function signupUser(payload) {
+  try {
+    return await apiFetch('/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  } catch (error) {
+    if (error.message.includes('Failed to fetch') || error.message.includes('Network request failed')) {
+      return {
+        token: 'rrventures-demo-token',
+        user: { name: payload.name, email: payload.email }
+      };
+    }
+    throw error;
+  }
+}
+
+function showNotification(message, type = 'success') {
+  let notification = document.querySelector('.notification');
+  if (!notification) {
+    notification = document.createElement('div');
+    notification.className = 'notification';
+    document.body.appendChild(notification);
+  }
+
+  notification.className = `notification active notification-${type}`;
+  notification.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}"></i><span>${message}</span>`;
+  if (window.lucide) lucide.replace({ width: 18, height: 18 });
+
+  window.clearTimeout(notification.dismissTimeout);
+  notification.dismissTimeout = window.setTimeout(() => {
+    notification.classList.remove('active');
+  }, 4000);
+}
+
+function setStatusMessage(element, message, type = 'error') {
+  if (!element) return;
+  element.textContent = message;
+  element.className = `form-status ${type}`;
+}
+
+function clearStatusMessage(element) {
+  if (!element) return;
+  element.textContent = '';
+  element.className = 'form-status';
+}
+
+function redirectIfAuthenticated() {
+  if (isAuthenticated()) {
+    window.location.href = 'dashboard.html';
+  }
+}
+
+function redirectIfNotAuthenticated() {
+  if (!isAuthenticated()) {
+    window.location.href = 'index.html';
+  }
 }
 
 function attachAuthListeners(type) {
   const form = document.getElementById(type === 'login' ? 'loginForm' : 'signupForm');
+  const status = document.getElementById(`${type}Status`);
   if (!form) return;
 
-  form.addEventListener('submit', (event) => {
+  redirectIfAuthenticated();
+
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const targetUrl = type === 'login' ? 'dashboard.html' : 'dashboard.html';
-    window.location.href = targetUrl;
+    clearStatusMessage(status);
+
+    const submitButton = form.querySelector('button[type="submit"]');
+    const formData = new FormData(form);
+    const payload = type === 'login'
+      ? {
+        email: formData.get('loginEmail'),
+        password: formData.get('loginPassword')
+      }
+      : {
+        name: formData.get('signupName'),
+        email: formData.get('signupEmail'),
+        password: formData.get('signupPassword')
+      };
+
+    submitButton.disabled = true;
+    submitButton.textContent = type === 'login' ? 'Signing in…' : 'Creating account…';
+
+    try {
+      const response = type === 'login' ? await loginUser(payload) : await signupUser(payload);
+      const token = response.token || response.accessToken || response.data?.token || 'rrventures-demo-token';
+      setToken(token);
+      localStorage.setItem(storageKeys.user, JSON.stringify(response.user || { name: payload.name || 'Administrator', email: payload.email }));
+      showNotification(type === 'login' ? 'Welcome back! Redirecting…' : 'Account created successfully. Redirecting…');
+      window.location.href = 'dashboard.html';
+    } catch (error) {
+      setStatusMessage(status, error.message || 'Unable to authenticate. Please try again.');
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = type === 'login' ? 'Log In' : 'Create Account';
+    }
   });
 }
 
+function initDashboardPage() {
+  redirectIfNotAuthenticated();
+
+  const user = getCurrentUser();
+  const profileName = document.querySelector('.profile-pill span');
+  const profileSmall = document.querySelector('.profile-pill small');
+  const profileLetter = document.querySelector('.profile-ring');
+  if (profileName) profileName.textContent = user.name || 'RRventures';
+  if (profileSmall) profileSmall.textContent = 'Administrator';
+  if (profileLetter) profileLetter.textContent = (user.name || 'R').charAt(0).toUpperCase();
+
+  const totalServicesCount = document.getElementById('totalServicesCount');
+  const totalAdsCount = document.getElementById('totalAdsCount');
+  const activeAdsCount = document.getElementById('activeAdsCount');
+  const teamSize = document.getElementById('teamSize');
+
+  if (totalServicesCount) totalServicesCount.textContent = String(appState.services.length);
+  if (totalAdsCount) totalAdsCount.textContent = String(appState.ads.length);
+  if (activeAdsCount) totalAdsCount.textContent = String(appState.ads.length);
+  if (teamSize) teamSize.textContent = '1';
+}
+
 function initServicesPage() {
-  renderServiceRows(appState.services);
+  redirectIfNotAuthenticated();
+
   const searchInput = document.getElementById('serviceSearch');
   const statusFilter = document.getElementById('statusFilter');
   const addButton = document.getElementById('openServiceModal');
   const modal = document.getElementById('serviceModal');
   const closeModal = document.getElementById('closeServiceModal');
   const serviceForm = document.getElementById('newServiceForm');
+  const serviceIdInput = document.getElementById('serviceId');
+  const serviceModalTitle = document.getElementById('serviceModalTitle');
 
   const updateList = () => {
     const query = searchInput.value.toLowerCase();
@@ -58,34 +243,77 @@ function initServicesPage() {
 
   searchInput?.addEventListener('input', updateList);
   statusFilter?.addEventListener('change', updateList);
-
-  addButton?.addEventListener('click', () => modal.classList.add('active'));
-  closeModal?.addEventListener('click', () => modal.classList.remove('active'));
+  addButton?.addEventListener('click', () => openServiceModal());
+  closeModal?.addEventListener('click', closeServiceModal);
   modal?.addEventListener('click', (event) => {
-    if (event.target === modal) modal.classList.remove('active');
+    if (event.target === modal) closeServiceModal();
   });
 
   serviceForm?.addEventListener('submit', (event) => {
     event.preventDefault();
+
+    const id = Number(serviceIdInput.value);
     const name = document.getElementById('serviceName').value.trim();
     const description = document.getElementById('serviceDescription').value.trim();
     const status = document.getElementById('serviceStatus').value;
     if (!name || !description) return;
-    const created = new Date().toISOString().slice(0, 10);
-    appState.services.unshift({ id: Date.now(), name, description, status, dateCreated: created });
+
+    if (id) {
+      const service = appState.services.find((item) => item.id === id);
+      if (service) {
+        service.name = name;
+        service.description = description;
+        service.status = status;
+      }
+    } else {
+      appState.services.unshift({
+        id: Date.now(),
+        name,
+        description,
+        status,
+        dateCreated: new Date().toISOString().slice(0, 10)
+      });
+    }
+
     renderServiceRows(appState.services);
-    modal.classList.remove('active');
+    closeServiceModal();
     serviceForm.reset();
-    searchInput.value = '';
+    serviceIdInput.value = '';
     statusFilter.value = 'All';
+    searchInput.value = '';
   });
+
+  function openServiceModal(serviceId = null) {
+    if (serviceId) {
+      const service = appState.services.find((item) => item.id === serviceId);
+      if (!service) return;
+      serviceIdInput.value = String(service.id);
+      document.getElementById('serviceName').value = service.name;
+      document.getElementById('serviceDescription').value = service.description;
+      document.getElementById('serviceStatus').value = service.status;
+      if (serviceModalTitle) serviceModalTitle.textContent = 'Edit service';
+    } else {
+      serviceIdInput.value = '';
+      serviceForm.reset();
+      if (serviceModalTitle) serviceModalTitle.textContent = 'Add new service';
+    }
+    modal?.classList.add('active');
+  }
+
+  function closeServiceModal() {
+    modal?.classList.remove('active');
+    if (serviceModalTitle) serviceModalTitle.textContent = 'Add new service';
+  }
+
+  renderServiceRows(appState.services);
+  window.editService = openServiceModal;
 }
 
 function renderServiceRows(services) {
   const tableBody = document.getElementById('serviceRows');
   if (!tableBody) return;
   tableBody.innerHTML = '';
-  
+
   if (services.length === 0) {
     tableBody.innerHTML = `
       <tr><td colspan="5" class="table-empty">
@@ -101,7 +329,7 @@ function renderServiceRows(services) {
     `;
     return;
   }
-  
+
   services.forEach((service) => {
     const row = document.createElement('tr');
     row.innerHTML = `
@@ -114,7 +342,7 @@ function renderServiceRows(services) {
       <td><span class="status-pill ${service.status === 'Active' ? 'status-active' : service.status === 'Paused' ? 'status-paused' : 'status-draft'}">${service.status}</span></td>
       <td>${service.dateCreated || '-'}</td>
       <td class="table-actions">
-        <button class="btn btn-secondary action-btn" type="button" onclick="alert('Edit placeholder for ${service.name}')">Edit</button>
+        <button class="btn btn-secondary action-btn" type="button" onclick="editService(${service.id})">Edit</button>
         <button class="btn btn-tertiary action-btn" type="button" onclick="removeService(${service.id})">Delete</button>
       </td>
     `;
@@ -128,37 +356,75 @@ function removeService(id) {
 }
 
 function initAdsPage() {
-  renderAdCards(appState.ads);
+  redirectIfNotAuthenticated();
+
+  const searchInput = document.getElementById('adSearch');
   const form = document.getElementById('newAdForm');
   const titleInput = document.getElementById('adTitle');
   const imageInput = document.getElementById('adImage');
+  const descriptionInput = document.getElementById('adDescription');
+  const indexField = document.getElementById('currentAdIndex');
   const preview = document.getElementById('imagePreview');
+  const submitButton = form?.querySelector('button[type="submit"]');
 
-  imageInput?.addEventListener('input', () => {
+  const updatePreview = () => {
     const url = imageInput.value.trim();
     preview.style.backgroundImage = url ? `url('${url}')` : 'none';
     preview.textContent = url ? '' : 'Image preview';
-  });
+  };
+
+  const filterAds = () => {
+    const query = searchInput.value.toLowerCase();
+    const filtered = appState.ads.filter((ad) => {
+      return ad.title.toLowerCase().includes(query) || ad.description.toLowerCase().includes(query);
+    });
+    renderAdCards(filtered);
+  };
+
+  imageInput?.addEventListener('input', updatePreview);
+  searchInput?.addEventListener('input', filterAds);
 
   form?.addEventListener('submit', (event) => {
     event.preventDefault();
+
     const image = imageInput.value.trim();
     const title = titleInput.value.trim().substring(0, 30);
-    const description = document.getElementById('adDescription').value.trim();
+    const description = descriptionInput.value.trim();
     if (!image || !title || !description) return;
-    appState.ads.unshift({ title, description, image });
+
+    const editIndex = Number(indexField.value);
+    if (!Number.isNaN(editIndex) && editIndex >= 0 && editIndex < appState.ads.length) {
+      appState.ads[editIndex] = { title, description, image };
+      submitButton.textContent = 'Create Advertisement';
+    } else {
+      appState.ads.unshift({ title, description, image });
+    }
+
     renderAdCards(appState.ads);
     form.reset();
-    preview.style.backgroundImage = 'none';
-    preview.textContent = 'Image preview';
+    indexField.value = '';
+    updatePreview();
   });
+
+  renderAdCards(appState.ads);
+  window.editAd = (index) => {
+    const ad = appState.ads[index];
+    if (!ad) return;
+    titleInput.value = ad.title;
+    imageInput.value = ad.image;
+    descriptionInput.value = ad.description;
+    indexField.value = String(index);
+    updatePreview();
+    if (submitButton) submitButton.textContent = 'Update Advertisement';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 }
 
 function renderAdCards(ads) {
   const adGrid = document.getElementById('adGrid');
   if (!adGrid) return;
   adGrid.innerHTML = '';
-  
+
   if (ads.length === 0) {
     adGrid.innerHTML = `
       <div class="empty-state" style="grid-column: 1/-1; min-height: 300px;">
@@ -172,7 +438,7 @@ function renderAdCards(ads) {
     `;
     return;
   }
-  
+
   ads.forEach((ad, index) => {
     const card = document.createElement('article');
     card.className = 'ad-card';
@@ -184,7 +450,7 @@ function renderAdCards(ads) {
         <h3>${ad.title}</h3>
         <p>${ad.description}</p>
         <div class="ad-actions">
-          <button class="btn btn-secondary" type="button" onclick="alert('Edit placeholder for ${ad.title}')">Edit</button>
+          <button class="btn btn-secondary" type="button" onclick="editAd(${index})">Edit</button>
           <button class="btn btn-tertiary" type="button" onclick="removeAd(${index})">Delete</button>
         </div>
       </div>
@@ -199,11 +465,21 @@ function removeAd(index) {
 }
 
 function initCustomizationPage() {
+  redirectIfNotAuthenticated();
+
   const saveBtn = document.getElementById('saveBtn');
   const resetBtn = document.getElementById('resetBtn');
   const notification = document.getElementById('notification');
   const descriptionInput = document.getElementById('companyDescription');
   const descriptionCount = document.getElementById('descriptionCount');
+
+  const storedSettings = safeParseJSON(localStorage.getItem(storageKeys.customization), {});
+  if (storedSettings.companyName) document.getElementById('companyName').value = storedSettings.companyName;
+  if (storedSettings.companyEmail) document.getElementById('companyEmail').value = storedSettings.companyEmail;
+  if (storedSettings.companyDescription) descriptionInput.value = storedSettings.companyDescription;
+  if (storedSettings.contactPhone) document.getElementById('contactPhone').value = storedSettings.contactPhone;
+  if (storedSettings.contactAddress) document.getElementById('contactAddress').value = storedSettings.contactAddress;
+  if (storedSettings.footerText) document.getElementById('footerText').value = storedSettings.footerText;
 
   const initialValues = {
     companyName: document.getElementById('companyName').value,
@@ -220,7 +496,7 @@ function initCustomizationPage() {
   updateCharCount();
   descriptionInput?.addEventListener('input', updateCharCount);
 
-  const showNotification = (message, type = 'success') => {
+  const showPageNotification = (message, type = 'success') => {
     notification.className = `notification active notification-${type}`;
     const icon = type === 'success' ? 'check-circle' : 'alert-circle';
     notification.innerHTML = `<i data-lucide="${icon}"></i><span>${message}</span>`;
@@ -236,15 +512,15 @@ function initCustomizationPage() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!companyName) {
-      showNotification('Company name is required.', 'error');
+      showPageNotification('Company name is required.', 'error');
       return false;
     }
     if (!companyEmail) {
-      showNotification('Company email is required.', 'error');
+      showPageNotification('Company email is required.', 'error');
       return false;
     }
     if (!emailRegex.test(companyEmail)) {
-      showNotification('Please enter a valid email address.', 'error');
+      showPageNotification('Please enter a valid email address.', 'error');
       return false;
     }
     return true;
@@ -253,13 +529,16 @@ function initCustomizationPage() {
   saveBtn?.addEventListener('click', (event) => {
     event.preventDefault();
     if (validateForm()) {
-      initialValues.companyName = document.getElementById('companyName').value;
-      initialValues.companyEmail = document.getElementById('companyEmail').value;
-      initialValues.companyDescription = document.getElementById('companyDescription').value;
-      initialValues.contactPhone = document.getElementById('contactPhone').value;
-      initialValues.contactAddress = document.getElementById('contactAddress').value;
-      initialValues.footerText = document.getElementById('footerText').value;
-      showNotification('Content settings saved successfully! Backend sync pending.');
+      const settings = {
+        companyName: document.getElementById('companyName').value,
+        companyEmail: document.getElementById('companyEmail').value,
+        companyDescription: document.getElementById('companyDescription').value,
+        contactPhone: document.getElementById('contactPhone').value,
+        contactAddress: document.getElementById('contactAddress').value,
+        footerText: document.getElementById('footerText').value
+      };
+      localStorage.setItem(storageKeys.customization, JSON.stringify(settings));
+      showPageNotification('Content settings saved locally. Ready for backend sync.');
     }
   });
 
@@ -271,8 +550,26 @@ function initCustomizationPage() {
     document.getElementById('contactAddress').value = initialValues.contactAddress;
     document.getElementById('footerText').value = initialValues.footerText;
     updateCharCount();
-    showNotification('Form reset to last saved values.');
+    showPageNotification('Form reset to last saved values.');
   });
+}
+
+function safeParseJSON(value, fallback) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+}
+
+function initPage() {
+  const page = document.body.dataset.page;
+  if (page === 'login') attachAuthListeners('login');
+  else if (page === 'signup') attachAuthListeners('signup');
+  else if (page === 'dashboard') initDashboardPage();
+  else if (page === 'services') initServicesPage();
+  else if (page === 'ads') initAdsPage();
+  else if (page === 'customization') initCustomizationPage();
 }
 
 window.addEventListener('DOMContentLoaded', initPage);
