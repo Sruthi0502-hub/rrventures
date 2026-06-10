@@ -22,7 +22,8 @@ async function bootstrap() {
   const port = configService.get<string>('PORT') || '0.0.0.0';
   await app.listen(port);
   app.enableCors({
-    origin: "*"
+    origin: 'http://127.0.0.1:5500',
+    Credential: true
   });
 }
 bootstrap();
