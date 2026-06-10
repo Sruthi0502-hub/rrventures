@@ -1,9 +1,29 @@
+
+
 const API_BASE = '/api';
+const API_URL = "https://dashboard-management-1.onrender.com";
+
 const storageKeys = {
   token: 'rrventures_token',
   user: 'rrventures_user',
   customization: 'rrventures_customization'
 };
+
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      config.headers.Authorization =
+        `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 const dummyServices = [
   { id: 1, name: 'Website Development', description: 'Modern landing pages and custom e-commerce solutions.', status: 'Active', dateCreated: '2026-04-09' },
@@ -79,7 +99,7 @@ async function apiFetch(path, options = {}) {
 
 async function loginUser(payload) {
   try {
-    return await apiFetch('/auth/login', {
+    return await apiFetch(`/${API_URL}auth/login`, {
       method: 'POST',
       body: JSON.stringify(payload)
     });
@@ -96,7 +116,7 @@ async function loginUser(payload) {
 
 async function signupUser(payload) {
   try {
-    return await apiFetch('/auth/signup', {
+    return await apiFetch(`/${API_URL}auth/signup`, {
       method: 'POST',
       body: JSON.stringify(payload)
     });
