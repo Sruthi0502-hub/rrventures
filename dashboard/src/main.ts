@@ -23,7 +23,7 @@ async function bootstrap() {
   await app.listen(port);
   app.enableCors({
     origin: 'http://127.0.0.1:5500',
-    Credential: true
+    credential: true
   });
 }
 bootstrap();
