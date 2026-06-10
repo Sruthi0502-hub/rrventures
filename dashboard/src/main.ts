@@ -23,7 +23,9 @@ async function bootstrap() {
   await app.listen(port);
   app.enableCors({
     origin: 'http://127.0.0.1:5500',
-    credential: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 }
 bootstrap();
