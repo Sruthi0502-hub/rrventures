@@ -22,7 +22,7 @@ async function bootstrap() {
   const port = configService.get<string>('PORT') || '0.0.0.0';
   await app.listen(port);
   app.enableCors({
-    origin: 'http://127.0.0.1:5500',
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
