@@ -17,7 +17,7 @@
       </button>
       <nav class="side-nav" id="sidebar-nav">
         <a href="dashboard.html"><i data-lucide="home"></i>Overview</a>
-        <a href="services.html" class="active"><i data-lucide="tool"></i>Services</a>
+        <a href="services.html" class="active"><i data-lucide="tool"></i>Properties</a>
         <a href="ads.html"><i data-lucide="megaphone"></i>Advertisements</a>
         <a href="customization.html"><i data-lucide="sliders-horizontal"></i>Customization</a>
         <a href="logout.html"><i data-lucide="log-out"></i>Logout</a>
@@ -28,16 +28,16 @@
       <main class="main-area" id="main-content" role="main">
       <div class="page-heading">
         <div>
-          <h1>Services Management</h1>
-          <p>Manage all active offerings, update statuses, and add new service packages.</p>
+          <h1>Properties Management</h1>
+          <p>Manage property listings, upload images, and update details.</p>
         </div>
-        <button id="openServiceModal" class="btn btn-primary icon-btn"><i data-lucide="plus-circle"></i><span>Add Service</span></button>
+        <button id="openServiceModal" class="btn btn-primary icon-btn"><i data-lucide="plus-circle"></i><span>Add Property</span></button>
       </div>
 
       <div class="controls-row controls-grid">
         <div class="search-group">
-          <label class="input-label" for="serviceSearch">Search services</label>
-          <input id="serviceSearch" class="filter-input" type="search" placeholder="Search by name or description" />
+          <label class="input-label" for="serviceSearch">Search properties</label>
+          <input id="serviceSearch" class="filter-input" type="search" placeholder="Search by title or description" />
         </div>
         <div class="search-group">
           <label class="input-label" for="statusFilter">Filter by status</label>
@@ -55,10 +55,9 @@
           <table>
             <thead>
               <tr>
-                <th>Service Name</th>
+                <th>Property Title</th>
                 <th>Description</th>
                 <th>Price</th>
-                <th>Location</th>
                 <th>Status</th>
                 <th>Date Created</th>
                 <th>Actions</th>
@@ -73,12 +72,12 @@
 
   <div id="serviceModal" class="modal-backdrop">
     <div class="modal-window">
-      <h3 id="serviceModalTitle">Add new service</h3>
+      <h3 id="serviceModalTitle">Add new property</h3>
       <form id="newServiceForm" class="form-grid">
         <input type="hidden" id="serviceId" value="" />
         <label>
-          Service Name
-          <input type="text" id="serviceName" placeholder="Brand strategy" required />
+          Property Title
+          <input type="text" id="serviceName" placeholder="3-bedroom apartment" required />
         </label>
         <label>
           Description
@@ -90,11 +89,11 @@
         </label>
         <label>
           Location
-          <input type="text" id="serviceLocation" placeholder="Remote" required />
+          <input type="text" id="serviceLocation" placeholder="City, Address or 'Remote'" required />
         </label>
         <label>
-          Image URL
-          <input type="url" id="serviceImage" placeholder="https://images.unsplash.com/..." required />
+          Image Upload
+          <input type="file" id="serviceImage" accept="image/*" required />
         </label>
         <label>
           Status
@@ -106,7 +105,7 @@
         </label>
         <div class="modal-footer">
           <button type="button" id="closeServiceModal" class="btn btn-secondary">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Service</button>
+          <button type="submit" class="btn btn-primary">Save Property</button>
         </div>
       </form>
     </div>

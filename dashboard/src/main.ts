@@ -19,9 +19,16 @@ async function bootstrap() {
     .setVersion('1.0').addBearerAuth().build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('dashboard-management', app, document);
-  const port = configService.get<string>('PORT') || '0.0.0.0';
+  const portFromEnv = configService.get<string>('PORT');
+  const port = portFromEnv ? parseInt(portFromEnv, 10) : 3000;
   app.enableCors({
-    origin: 'http://127.0.0.1:5500',
+    origin: [
+      'http://127.0.0.1:5500',
+      'http://localhost:5500',
+      'http://127.0.0.1:3000',
+      'http://localhost:3000',
+      'null'
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

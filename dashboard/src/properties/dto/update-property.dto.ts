@@ -18,6 +18,10 @@ export class UpdatePropertyDto {
     @Type(() => Number)
     price!: number
 
+    @IsString()
+    @ApiProperty({ example: 'Property location or address' })
+    location!: string
+
 
 
 

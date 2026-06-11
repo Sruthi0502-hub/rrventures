@@ -1,29 +1,21 @@
 
-const API_URL = "https://dashboard-management-u6vj.onrender.com"
+// ==========================================
+// RRVENTURES ADMIN DASHBOARD - BACKEND INTEGRATION
+// ==========================================
+
+const localHosts = ['localhost', '127.0.0.1', ''];
+const API_BASE_URL = localHosts.includes(window.location.hostname) || window.location.protocol === 'file:'
+  ? 'http://localhost:3000'
+  : 'https://dashboard-management-1.onrender.com';
 
 const storageKeys = {
   token: 'token',
   user: 'user'
 };
 
-
-const dummyServices = [
-  { id: 1, name: 'Website Development', description: 'Modern landing pages and custom e-commerce solutions.', price: '$2,500', location: 'Remote', image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=120&q=80', status: 'Active', dateCreated: '2026-04-09' },
-  { id: 2, name: 'SEO Strategy', description: 'Keyword audits, content planning, and backlink management.', price: '$1,200', location: 'Remote', image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=120&q=80', status: 'Active', dateCreated: '2026-05-14' },
-  { id: 3, name: 'Social Campaign', description: 'Creative ads and performance tracking for your social spend.', price: '$1,800', location: 'Hybrid', image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=120&q=80', status: 'Paused', dateCreated: '2026-03-22' },
-  { id: 4, name: 'Analytics Audit', description: 'Improve conversions with data-backed product insights.', price: '$950', location: 'On-site', image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=120&q=80', status: 'Draft', dateCreated: '2026-06-01' }
-];
-
-const dummyAds = [
-  { title: 'Summer Launch', description: 'Capture new leads with our all-in-one launch campaign.', image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=900&q=80' },
-  { title: 'Brand Refresh', description: 'Upgrade your identity with fresh design and messaging.', image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=900&q=80' },
-  { title: 'Lead Magnet', description: 'Drive signups with high-performing paid creative.', image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=900&q=80' }
-];
-
-const appState = {
-  services: [...dummyServices],
-  ads: [...dummyAds]
-};
+// Backend data storage
+let servicesData = [];
+let adsData = [];
 
 function getToken() {
   return localStorage.getItem(storageKeys.token);
@@ -50,7 +42,23 @@ function getCurrentUser() {
   }
 }
 
-// 3. Axios Interceptor Fix (Agar tum Axios use kar rahe ho toh)
+function decodeJWT(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
+    const payload = atob(padded);
+    return JSON.parse(payload);
+  } catch (e) {
+    console.error('JWT decode failed', e);
+    return null;
+  }
+}
+
+// ==========================================
+// AXIOS INTERCEPTOR (if axios is loaded)
+// ==========================================
+
 if (typeof axios !== 'undefined') {
   axios.interceptors.request.use(
     (config) => {
@@ -64,9 +72,12 @@ if (typeof axios !== 'undefined') {
   );
 }
 
+// ==========================================
+// API FETCH WRAPPER
+// ==========================================
+
 async function apiFetch(path, options = {}) {
   const headers = {
-    'Content-Type': 'application/json',
     ...options.headers,
   };
 
@@ -75,127 +86,117 @@ async function apiFetch(path, options = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
+  const isFormData = Boolean(options.isFormData) || options.body instanceof FormData;
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   try {
-    // URL ekdum perfect clean banega bina kisi mix-up ke
-    const response = await fetch(`${API_URL}${path}`, {
+    const bodyPreview = isFormData
+      ? '[FormData]'
+      : options.body
+        ? (typeof options.body === 'string' ? JSON.parse(options.body) : options.body)
+        : '';
+    console.log(`[API] ${options.method || 'GET'} ${API_BASE_URL}${path}`, bodyPreview);
+
+    const fetchOptions = {
       ...options,
       headers,
-    });
+    };
 
-    // Response parse karne ki koshish karo
+    // If body is an object and not FormData, ensure it's stringified
+    if (!isFormData && fetchOptions.body && typeof fetchOptions.body !== 'string') {
+      fetchOptions.body = JSON.stringify(fetchOptions.body);
+    }
+
+    const response = await fetch(`${API_BASE_URL}${path}`, fetchOptions);
+
     const payload = await response.json().catch(() => ({}));
+    
+    console.log(`[API RESPONSE] Status: ${response.status}`, payload);
 
-    // Agar status code 200-299 ke beech nahi hai (e.g., 400, 401, 404, 500)
     if (!response.ok) {
-      // Backend agar NestJS hai toh wo error message 'message' field me bhejta hai
       const errorMsg = Array.isArray(payload.message)
-        ? payload.message.join(', ') // Validation errors ke liye
-        : payload.message || response.statusText || 'Kuch gadbad ho gayi!';
+        ? payload.message.join(', ')
+        : payload.message || response.statusText || `Error: ${response.status}`;
       throw new Error(errorMsg);
     }
 
     return payload;
   } catch (error) {
-    // Agar internet band ho ya server crash ho gaya ho
+    console.error('[API ERROR]', error.message);
     if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-      throw new Error('Server se connect nahi ho pa rha hai. Kripya thoda intezar karein.');
+      throw new Error('Unable to connect to server. Please check your internet connection.');
     }
-    throw error; // Jo error aayi hai use aage pass karo
+    throw error;
   }
 }
+
+// ==========================================
+// AUTHENTICATION FUNCTIONS
+// ==========================================
 
 async function loginUser(payload) {
   try {
-    const data = await apiFetch('/auth/login', {
+    console.log('[LOGIN] Attempting login with email:', payload.email);
+    const response = await apiFetch('/auth/login', {
       method: 'POST',
       body: JSON.stringify(payload)
     });
 
-    // Agar backend se token aur user data sahi aaya toh save karo
-    if (data && data.token) {
-      setToken(data.token);
-      if (data.user) {
-        localStorage.setItem(storageKeys.user, JSON.stringify(data.user));
-      }
+    if (response && response.access_token) {
+        const token = response.access_token;
+        setToken(token);
+        if (response.user) {
+          localStorage.setItem(storageKeys.user, JSON.stringify(response.user));
+        } else {
+          const decoded = decodeJWT(response.access_token);
+          if (decoded) {
+            localStorage.setItem(storageKeys.user, JSON.stringify({
+              userId: decoded.sub,
+              email: decoded.email,
+              role: decoded.role
+            }));
+          }
+        }
     }
-    return data;
+    return response;
   } catch (error) {
-    console.error("Login Error:", error.message);
-    throw error; // Isko form submit handler pakdega aur UI par alert dikhayega
+    console.error('[LOGIN ERROR]', error.message);
+    throw error;
   }
 }
 
-// --- 1. Signup API Core Function ---
 async function signupUser(payload) {
   try {
-    // apiFetch ko bilkul sahi clean path bhej rahe hain
-    return await apiFetch('/auth/create-super-admin', {
+    console.log('[SIGNUP] Attempting signup with email:', payload.email);
+    const response = await apiFetch('/auth/signup', {
       method: 'POST',
       body: JSON.stringify(payload)
     });
+
+    // Backend creates a new admin and returns a JWT payload on signup.
+    // If the endpoint does not return a token, retry login with the same credentials.
+    if (response && !response.access_token) {
+      await loginUser({ email: payload.email, password: payload.password });
+    }
+
+    if (response && response.access_token) {
+      const token = response.access_token;
+      setToken(token);
+      if (response.user) {
+        localStorage.setItem(storageKeys.user, JSON.stringify(response.user));
+      } else {
+        const user = decodeJWT(token);
+        localStorage.setItem(storageKeys.user, JSON.stringify(user));
+      }
+    }
+
+    return response;
   } catch (error) {
-    console.error("Signup Error in Method:", error.message);
-    throw error; // Is error ko neeche wala event listener pakdega aur UI par dikhayega
+    console.error('[SIGNUP ERROR]', error.message);
+    throw error;
   }
-}
-
-// --- 2. Signup Form Submit Handler (DOM Connection) ---
-// HTML ke form id 'signupForm' ko target kiya
-const signupForm = document.getElementById('signupForm');
-
-if (signupForm) {
-  signupForm.addEventListener('submit', async (event) => {
-    event.preventDefault(); // Page ko automatic reload hone se rokne ke liye
-
-    // Tumhaare HTML ke exact IDs ko pakda
-    const nameInput = document.getElementById('signupName');
-    const emailInput = document.getElementById('signupEmail');
-    const passwordInput = document.getElementById('signupPassword');
-    const statusDiv = document.getElementById('signupStatus');
-
-    // UI par loading state dikhane ke liye (Blue Color)
-    if (statusDiv) {
-      statusDiv.style.color = '#3182ce';
-      statusDiv.style.display = 'block';
-      statusDiv.textContent = 'Account create ho rha hai, kripya intezar karein...';
-    }
-
-    // Data payload taiyar kiya
-    const payload = {
-      name: nameInput.value.trim(),
-      email: emailInput.value.trim(),
-      password: passwordInput.value
-    };
-
-    try {
-      // API call kiya
-      const response = await signupUser(payload);
-
-      // Success State (Green Color)
-      if (statusDiv) {
-        statusDiv.style.color = '#38a169';
-        statusDiv.textContent = 'Signup Successful! Log in page par bheja ja rha hai...';
-      }
-
-      // Input fields ko saaf (clear) kar diya
-      nameInput.value = '';
-      emailInput.value = '';
-      passwordInput.value = '';
-
-      // 2 second ka delay dekar user ko login page (index.html) par bhej diya
-      setTimeout(() => {
-        window.location.href = 'index.html';
-      }, 2000);
-
-    } catch (error) {
-      // Error State (Red Color)
-      // Jo bhi error backend (NestJS) se aayegi ya network crash hoga, wo yahan dikhega
-      if (statusDiv) {
-        statusDiv.style.color = '#e53e3e';
-        statusDiv.textContent = error.message;
-      }
-    }
-  });
 }
 
 function showNotification(message, type = 'success') {
@@ -216,16 +217,133 @@ function showNotification(message, type = 'success') {
   }, 4000);
 }
 
-function setStatusMessage(element, message, type = 'error') {
-  if (!element) return;
-  element.textContent = message;
-  element.className = `form-status ${type}`;
+// ==========================================
+// PROPERTIES API FUNCTIONS (remapped from Services)
+// ==========================================
+
+async function fetchServices() {
+  try {
+    console.log('[PROPERTIES] Fetching admin properties');
+    return await apiFetch('/properties/admin-property', { method: 'GET' });
+  } catch (error) {
+    console.error('[PROPERTIES FETCH ERROR]', error.message);
+    return [];
+  }
 }
 
-function clearStatusMessage(element) {
-  if (!element) return;
-  element.textContent = '';
-  element.className = 'form-status';
+async function createProperty(formData) {
+  try {
+    console.log('[PROPERTIES] Creating new property (FormData)');
+    return await apiFetch('/properties/create-properties', {
+      method: 'POST',
+      body: formData,
+      isFormData: true,
+    });
+  } catch (error) {
+    console.error('[PROPERTIES CREATE ERROR]', error.message);
+    throw error;
+  }
+}
+
+async function updateProperty(id, formData) {
+  try {
+    console.log(`[PROPERTIES] Updating property ${id} (FormData)`);
+    return await apiFetch(`/properties/${id}`, {
+      method: 'PATCH',
+      body: formData,
+      isFormData: true,
+    });
+  } catch (error) {
+    console.error('[PROPERTIES UPDATE ERROR]', error.message);
+    throw error;
+  }
+}
+
+async function deleteProperty(id) {
+  try {
+    console.log(`[PROPERTIES] Deleting property ${id}`);
+    return await apiFetch(`/properties/${id}`, { method: 'DELETE' });
+  } catch (error) {
+    console.error('[PROPERTIES DELETE ERROR]', error.message);
+    throw error;
+  }
+}
+
+// ==========================================
+// ADS API FUNCTIONS
+// ==========================================
+
+async function fetchAds() {
+  try {
+    console.log('[ADS] Fetching all ads');
+    return await apiFetch('/ads', { method: 'GET' });
+  } catch (error) {
+    console.error('[ADS FETCH ERROR]', error.message);
+    return { data: [] };
+  }
+}
+
+async function createAd(payload) {
+  try {
+    console.log('[ADS] Creating new ad');
+    return await apiFetch('/ads', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  } catch (error) {
+    console.error('[ADS CREATE ERROR]', error.message);
+    throw error;
+  }
+}
+
+async function updateAd(id, payload) {
+  try {
+    console.log(`[ADS] Updating ad ${id}`);
+    return await apiFetch(`/ads/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+  } catch (error) {
+    console.error('[ADS UPDATE ERROR]', error.message);
+    throw error;
+  }
+}
+
+async function deleteAd(id) {
+  try {
+    console.log(`[ADS] Deleting ad ${id}`);
+    return await apiFetch(`/ads/${id}`, { method: 'DELETE' });
+  } catch (error) {
+    console.error('[ADS DELETE ERROR]', error.message);
+    throw error;
+  }
+}
+
+// ==========================================
+// CUSTOMIZATION API FUNCTIONS
+// ==========================================
+
+async function fetchCustomization() {
+  try {
+    console.log('[CUSTOMIZATION] Fetching customization');
+    return await apiFetch('/customization', { method: 'GET' });
+  } catch (error) {
+    console.error('[CUSTOMIZATION FETCH ERROR]', error.message);
+    return {};
+  }
+}
+
+async function saveCustomization(payload) {
+  try {
+    console.log('[CUSTOMIZATION] Saving customization');
+    return await apiFetch('/customization', {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+  } catch (error) {
+    console.error('[CUSTOMIZATION SAVE ERROR]', error.message);
+    throw error;
+  }
 }
 
 function redirectIfAuthenticated() {
@@ -252,30 +370,43 @@ function attachAuthListeners(type) {
     clearStatusMessage(status);
 
     const submitButton = form.querySelector('button[type="submit"]');
-    const formData = new FormData(form);
-    const payload = type === 'login'
-      ? {
-        email: formData.get('loginEmail'),
-        password: formData.get('loginPassword')
+
+    // Collect form data using direct element access
+    let payload;
+    if (type === 'login') {
+      const email = document.getElementById('loginEmail')?.value.trim();
+      const password = document.getElementById('loginPassword')?.value;
+      
+      if (!email || !password) {
+        setStatusMessage(status, 'Please enter both email and password');
+        return;
       }
-      : {
-        name: formData.get('signupName'),
-        email: formData.get('signupEmail'),
-        password: formData.get('signupPassword')
-      };
+      
+      payload = { email, password };
+    } else {
+      const name = document.getElementById('signupName')?.value.trim();
+      const email = document.getElementById('signupEmail')?.value.trim();
+      const password = document.getElementById('signupPassword')?.value;
+      
+      if (!name || !email || !password) {
+        setStatusMessage(status, 'Please fill in all fields');
+        return;
+      }
+      
+      payload = { name, email, password };
+    }
 
     submitButton.disabled = true;
     submitButton.textContent = type === 'login' ? 'Signing in…' : 'Creating account…';
 
     try {
       const response = type === 'login' ? await loginUser(payload) : await signupUser(payload);
-      const token = response.token || response.accessToken || response.data?.token || 'rrventures-demo-token';
-      setToken(token);
-      localStorage.setItem(storageKeys.user, JSON.stringify(response.user || { name: payload.name || 'Administrator', email: payload.email }));
       showNotification(type === 'login' ? 'Welcome back! Redirecting…' : 'Account created successfully. Redirecting…');
-      window.location.href = 'dashboard.html';
+      setTimeout(() => {
+        window.location.href = 'dashboard.html';
+      }, 1000);
     } catch (error) {
-      setStatusMessage(status, error.message || 'Unable to authenticate. Please try again.');
+      setStatusMessage(status, error.message || 'Authentication failed. Please try again.');
     } finally {
       submitButton.disabled = false;
       submitButton.textContent = type === 'login' ? 'Log In' : 'Create Account';
@@ -283,13 +414,18 @@ function attachAuthListeners(type) {
   });
 }
 
-function initDashboardPage() {
+// ==========================================
+// DASHBOARD PAGE
+// ==========================================
+
+async function initDashboardPage() {
   redirectIfNotAuthenticated();
 
   const user = getCurrentUser();
   const profileName = document.querySelector('.profile-pill span');
   const profileSmall = document.querySelector('.profile-pill small');
   const profileLetter = document.querySelector('.profile-ring');
+  
   if (profileName) profileName.textContent = user.name || 'RRventures';
   if (profileSmall) profileSmall.textContent = 'Administrator';
   if (profileLetter) profileLetter.textContent = (user.name || 'R').charAt(0).toUpperCase();
@@ -299,13 +435,34 @@ function initDashboardPage() {
   const activeAdsCount = document.getElementById('activeAdsCount');
   const teamSize = document.getElementById('teamSize');
 
-  if (totalServicesCount) totalServicesCount.textContent = String(appState.services.length);
-  if (totalAdsCount) totalAdsCount.textContent = String(appState.ads.length);
-  if (activeAdsCount) totalAdsCount.textContent = String(appState.ads.length);
-  if (teamSize) teamSize.textContent = '1';
+  try {
+    const servicesRes = await fetchServices();
+
+    const services = Array.isArray(servicesRes)
+      ? servicesRes
+      : Array.isArray(servicesRes.property)
+        ? servicesRes.property
+        : Array.isArray(servicesRes.data)
+          ? servicesRes.data
+          : [];
+
+    if (totalServicesCount) totalServicesCount.textContent = String(services.length);
+    if (totalAdsCount) totalAdsCount.textContent = '0';
+    if (activeAdsCount) activeAdsCount.textContent = '0';
+    if (teamSize) teamSize.textContent = '1';
+  } catch (error) {
+    console.error('[DASHBOARD ERROR]', error);
+    if (totalServicesCount) totalServicesCount.textContent = '0';
+    if (totalAdsCount) totalAdsCount.textContent = '0';
+    if (activeAdsCount) activeAdsCount.textContent = '0';
+  }
 }
 
-function initServicesPage() {
+// ==========================================
+// SERVICES PAGE
+// ==========================================
+
+async function initServicesPage() {
   redirectIfNotAuthenticated();
 
   const searchInput = document.getElementById('serviceSearch');
@@ -317,12 +474,17 @@ function initServicesPage() {
   const serviceIdInput = document.getElementById('serviceId');
   const serviceModalTitle = document.getElementById('serviceModalTitle');
 
+  // Load services from API
+  await loadServices();
+
   const updateList = () => {
     const query = searchInput.value.toLowerCase();
     const status = statusFilter.value;
-    const filtered = appState.services.filter((service) => {
-      const matchesSearch = service.name.toLowerCase().includes(query) || service.description.toLowerCase().includes(query);
-      const matchesStatus = status === 'All' || service.status === status;
+    const filtered = servicesData.filter((service) => {
+      const title = (service.title || service.name || '').toLowerCase();
+      const description = (service.description || '').toLowerCase();
+      const matchesSearch = title.includes(query) || description.includes(query);
+      const matchesStatus = status === 'All' || (service.status || 'Active') === status;
       return matchesSearch && matchesStatus;
     });
     renderServiceRows(filtered);
@@ -336,76 +498,109 @@ function initServicesPage() {
     if (event.target === modal) closeServiceModal();
   });
 
-  serviceForm?.addEventListener('submit', (event) => {
+  serviceForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    const id = Number(serviceIdInput.value);
-    const name = document.getElementById('serviceName').value.trim();
+    const id = serviceIdInput.value.trim();
+    const title = document.getElementById('serviceName').value.trim();
     const description = document.getElementById('serviceDescription').value.trim();
     const price = document.getElementById('servicePrice').value.trim();
-    const location = document.getElementById('serviceLocation').value.trim();
-    const image = document.getElementById('serviceImage').value.trim();
+    const imageInput = document.getElementById('serviceImage');
+    const image = imageInput && imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
     const status = document.getElementById('serviceStatus').value;
-    if (!name || !description) return;
 
-    if (id) {
-      const service = appState.services.find((item) => item.id === id);
-      if (service) {
-        service.name = name;
-        service.description = description;
-        service.price = price;
-        service.location = location;
-        service.image = image;
-        service.status = status;
-      }
-    } else {
-      appState.services.unshift({
-        id: Date.now(),
-        name,
-        description,
-        price,
-        location,
-        image,
-        status,
-        dateCreated: new Date().toISOString().slice(0, 10)
-      });
+    if (!title || !description || !price || !image) {
+      showNotification('Please fill in all required fields', 'error');
+      return;
     }
 
-    renderServiceRows(appState.services);
-    closeServiceModal();
-    serviceForm.reset();
-    serviceIdInput.value = '';
-    statusFilter.value = 'All';
-    searchInput.value = '';
+    const submitButton = serviceForm.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+
+    try {
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('description', description);
+      formData.append('price', price);
+      formData.append('location', document.getElementById('serviceLocation').value.trim());
+      if (image) formData.append('image', image);
+
+      if (id) {
+        await updateProperty(id, formData);
+        showNotification('Property updated successfully');
+      } else {
+        await createProperty(formData);
+        showNotification('Property created successfully');
+      }
+
+      await loadServices();
+      renderServiceRows(servicesData);
+      closeServiceModal();
+      serviceForm.reset();
+      serviceIdInput.value = '';
+      statusFilter.value = 'All';
+      searchInput.value = '';
+    } catch (error) {
+      showNotification(error.message || 'Failed to save property', 'error');
+    } finally {
+      submitButton.disabled = false;
+    }
   });
 
   function openServiceModal(serviceId = null) {
     if (serviceId) {
-      const service = appState.services.find((item) => item.id === serviceId);
+      const service = servicesData.find((item) => item.id === serviceId || item._id === serviceId);
       if (!service) return;
-      serviceIdInput.value = String(service.id);
-      document.getElementById('serviceName').value = service.name;
-      document.getElementById('serviceDescription').value = service.description;
+      serviceIdInput.value = service._id || service.id;
+      document.getElementById('serviceName').value = service.title || service.name || '';
+      document.getElementById('serviceDescription').value = service.description || '';
       document.getElementById('servicePrice').value = service.price || '';
-      document.getElementById('serviceLocation').value = service.location || '';
-      document.getElementById('serviceImage').value = service.image || '';
-      document.getElementById('serviceStatus').value = service.status;
-      if (serviceModalTitle) serviceModalTitle.textContent = 'Edit service';
+      document.getElementById('serviceImage').value = '';
+      document.getElementById('serviceStatus').value = service.status || 'Active';
+      if (serviceModalTitle) serviceModalTitle.textContent = 'Edit property';
     } else {
       serviceIdInput.value = '';
       serviceForm.reset();
-      if (serviceModalTitle) serviceModalTitle.textContent = 'Add new service';
+      if (serviceModalTitle) serviceModalTitle.textContent = 'Add new property';
     }
     modal?.classList.add('active');
   }
 
   function closeServiceModal() {
     modal?.classList.remove('active');
-    if (serviceModalTitle) serviceModalTitle.textContent = 'Add new service';
+    if (serviceModalTitle) serviceModalTitle.textContent = 'Add new property';
   }
 
-  renderServiceRows(appState.services);
-  window.editService = openServiceModal;
+  renderServiceRows(servicesData);
+  window.editProperty = openServiceModal;
+  window.removeProperty = async (id) => {
+    if (confirm('Are you sure you want to delete this property?')) {
+      try {
+        await deleteProperty(id);
+        await loadServices();
+        renderServiceRows(servicesData);
+        showNotification('Property deleted successfully');
+      } catch (error) {
+        showNotification(error.message || 'Failed to delete property', 'error');
+      }
+    }
+  };
+}
+
+async function loadServices() {
+  try {
+    const response = await fetchServices();
+    servicesData = Array.isArray(response)
+      ? response
+      : Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.property)
+          ? response.property
+          : [];
+  } catch (error) {
+    console.error('[LOAD SERVICES ERROR]', error);
+    servicesData = [];
+  }
 }
 
 function renderServiceRows(services) {
@@ -418,11 +613,11 @@ function renderServiceRows(services) {
       <tr><td colspan="7" class="table-empty">
         <div class="empty-state">
           <div class="empty-state-icon">📋</div>
-          <h3>No services found</h3>
-          <p>Create your first service to get started managing your offerings.</p>
-          <button class="btn btn-primary icon-btn" onclick="document.getElementById('openServiceModal')?.click()">
-            <i data-lucide="plus"></i>Add Service
-          </button>
+              <h3>No properties found</h3>
+              <p>Create your first property to get started managing your listings.</p>
+              <button class="btn btn-primary icon-btn" onclick="document.getElementById('openServiceModal')?.click()">
+                <i data-lucide="plus"></i>Add Property
+              </button>
         </div>
       </td></tr>
     `;
@@ -432,33 +627,34 @@ function renderServiceRows(services) {
   services.forEach((service) => {
     const row = document.createElement('tr');
     const imageUrl = service.image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=120&q=80';
+    const serviceId = service._id || service.id;
+    const title = service.title || service.name || 'Untitled';
     row.innerHTML = `
       <td>
         <div class="name-cell" style="display: flex; align-items: center; gap: 0.85rem;">
-          <img src="${imageUrl}" alt="${service.name}" style="width: 44px; height: 44px; border-radius: 12px; object-fit: cover; border: 1.5px solid var(--border);" />
-          <strong style="color: var(--text);">${service.name}</strong>
+          <img src="${imageUrl}" alt="${title}" style="width: 44px; height: 44px; border-radius: 12px; object-fit: cover; border: 1.5px solid var(--border);" />
+          <strong style="color: var(--text);">${title}</strong>
         </div>
       </td>
       <td>${service.description}</td>
       <td><strong style="color: var(--primary);">${service.price || '-'}</strong></td>
       <td><span style="color: var(--text); font-weight: 500;">${service.location || '-'}</span></td>
-      <td><span class="status-pill ${service.status === 'Active' ? 'status-active' : service.status === 'Paused' ? 'status-paused' : 'status-draft'}">${service.status}</span></td>
-      <td>${service.dateCreated || '-'}</td>
+      <td><span class="status-pill ${service.status === 'Active' ? 'status-active' : service.status === 'Paused' ? 'status-paused' : 'status-draft'}">${service.status || 'Draft'}</span></td>
+      <td>${service.createdAt || service.updatedAt || '-'}</td>
       <td class="table-actions">
-        <button class="btn btn-secondary action-btn" type="button" onclick="editService(${service.id})">Edit</button>
-        <button class="btn btn-tertiary action-btn" type="button" onclick="removeService(${service.id})">Delete</button>
+        <button class="btn btn-secondary action-btn" type="button" onclick="editProperty('${serviceId}')">Edit</button>
+        <button class="btn btn-tertiary action-btn" type="button" onclick="removeProperty('${serviceId}')">Delete</button>
       </td>
     `;
     tableBody.appendChild(row);
   });
 }
 
-function removeService(id) {
-  appState.services = appState.services.filter((service) => service.id !== id);
-  renderServiceRows(appState.services);
-}
+// ==========================================
+// ADS PAGE
+// ==========================================
 
-function initAdsPage() {
+async function initAdsPage() {
   redirectIfNotAuthenticated();
 
   const searchInput = document.getElementById('adSearch');
@@ -470,6 +666,9 @@ function initAdsPage() {
   const preview = document.getElementById('imagePreview');
   const submitButton = form?.querySelector('button[type="submit"]');
 
+  // Load ads from API
+  await loadAds();
+
   const updatePreview = () => {
     const url = imageInput.value.trim();
     preview.style.backgroundImage = url ? `url('${url}')` : 'none';
@@ -478,7 +677,7 @@ function initAdsPage() {
 
   const filterAds = () => {
     const query = searchInput.value.toLowerCase();
-    const filtered = appState.ads.filter((ad) => {
+    const filtered = adsData.filter((ad) => {
       return ad.title.toLowerCase().includes(query) || ad.description.toLowerCase().includes(query);
     });
     renderAdCards(filtered);
@@ -487,40 +686,80 @@ function initAdsPage() {
   imageInput?.addEventListener('input', updatePreview);
   searchInput?.addEventListener('input', filterAds);
 
-  form?.addEventListener('submit', (event) => {
+  form?.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const image = imageInput.value.trim();
     const title = titleInput.value.trim().substring(0, 30);
     const description = descriptionInput.value.trim();
-    if (!image || !title || !description) return;
-
-    const editIndex = Number(indexField.value);
-    if (!Number.isNaN(editIndex) && editIndex >= 0 && editIndex < appState.ads.length) {
-      appState.ads[editIndex] = { title, description, image };
-      submitButton.textContent = 'Create Advertisement';
-    } else {
-      appState.ads.unshift({ title, description, image });
+    
+    if (!image || !title || !description) {
+      showNotification('Please fill in all fields', 'error');
+      return;
     }
 
-    renderAdCards(appState.ads);
-    form.reset();
-    indexField.value = '';
-    updatePreview();
+    const adId = indexField.value.trim();
+    submitButton.disabled = true;
+
+    try {
+      const payload = { title, description, image };
+      
+      if (adId) {
+        await updateAd(adId, payload);
+        showNotification('Ad updated successfully');
+      } else {
+        await createAd(payload);
+        showNotification('Ad created successfully');
+      }
+
+      await loadAds();
+      renderAdCards(adsData);
+      form.reset();
+      indexField.value = '';
+      updatePreview();
+      if (submitButton) submitButton.textContent = 'Create Advertisement';
+    } catch (error) {
+      showNotification(error.message || 'Failed to save ad', 'error');
+    } finally {
+      submitButton.disabled = false;
+    }
   });
 
-  renderAdCards(appState.ads);
-  window.editAd = (index) => {
-    const ad = appState.ads[index];
+  renderAdCards(adsData);
+  window.editAd = (adId) => {
+    const ad = adsData.find(a => a.id === adId || a._id === adId);
     if (!ad) return;
     titleInput.value = ad.title;
     imageInput.value = ad.image;
     descriptionInput.value = ad.description;
-    indexField.value = String(index);
+    indexField.value = ad._id || ad.id;
     updatePreview();
     if (submitButton) submitButton.textContent = 'Update Advertisement';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  window.removeAd = async (adId) => {
+    if (confirm('Are you sure you want to delete this ad?')) {
+      try {
+        await deleteAd(adId);
+        await loadAds();
+        renderAdCards(adsData);
+        showNotification('Ad deleted successfully');
+      } catch (error) {
+        showNotification(error.message || 'Failed to delete ad', 'error');
+      }
+    }
+  };
+}
+
+async function loadAds() {
+  try {
+    const response = await fetchAds();
+    adsData = response.data || response || [];
+  } catch (error) {
+    console.error('[LOAD ADS ERROR]', error);
+    adsData = [];
+  }
 }
 
 function renderAdCards(ads) {
@@ -542,9 +781,10 @@ function renderAdCards(ads) {
     return;
   }
 
-  ads.forEach((ad, index) => {
+  ads.forEach((ad) => {
     const card = document.createElement('article');
     card.className = 'ad-card';
+    const adId = ad._id || ad.id;
     card.innerHTML = `
       <div class="ad-media" style="background-image: url('${ad.image}'); background-size: cover; background-position: center;">
         ${ad.image ? '' : 'Image preview'}
@@ -553,8 +793,8 @@ function renderAdCards(ads) {
         <h3>${ad.title}</h3>
         <p>${ad.description}</p>
         <div class="ad-actions">
-          <button class="btn btn-secondary" type="button" onclick="editAd(${index})">Edit</button>
-          <button class="btn btn-tertiary" type="button" onclick="removeAd(${index})">Delete</button>
+          <button class="btn btn-secondary" type="button" onclick="editAd('${adId}')">Edit</button>
+          <button class="btn btn-tertiary" type="button" onclick="removeAd('${adId}')">Delete</button>
         </div>
       </div>
     `;
@@ -562,12 +802,11 @@ function renderAdCards(ads) {
   });
 }
 
-function removeAd(index) {
-  appState.ads.splice(index, 1);
-  renderAdCards(appState.ads);
-}
+// ==========================================
+// CUSTOMIZATION PAGE
+// ==========================================
 
-function initCustomizationPage() {
+async function initCustomizationPage() {
   redirectIfNotAuthenticated();
 
   const saveBtn = document.getElementById('saveBtn');
@@ -576,13 +815,21 @@ function initCustomizationPage() {
   const descriptionInput = document.getElementById('companyDescription');
   const descriptionCount = document.getElementById('descriptionCount');
 
-  const storedSettings = safeParseJSON(localStorage.getItem(storageKeys.customization), {});
-  if (storedSettings.companyName) document.getElementById('companyName').value = storedSettings.companyName;
-  if (storedSettings.companyEmail) document.getElementById('companyEmail').value = storedSettings.companyEmail;
-  if (storedSettings.companyDescription) descriptionInput.value = storedSettings.companyDescription;
-  if (storedSettings.contactPhone) document.getElementById('contactPhone').value = storedSettings.contactPhone;
-  if (storedSettings.contactAddress) document.getElementById('contactAddress').value = storedSettings.contactAddress;
-  if (storedSettings.footerText) document.getElementById('footerText').value = storedSettings.footerText;
+  // Load customization from API
+  let customizationData = {};
+  try {
+    const response = await fetchCustomization();
+    customizationData = response.data || response || {};
+    
+    if (customizationData.companyName) document.getElementById('companyName').value = customizationData.companyName;
+    if (customizationData.companyEmail) document.getElementById('companyEmail').value = customizationData.companyEmail;
+    if (customizationData.companyDescription) descriptionInput.value = customizationData.companyDescription;
+    if (customizationData.contactPhone) document.getElementById('contactPhone').value = customizationData.contactPhone;
+    if (customizationData.contactAddress) document.getElementById('contactAddress').value = customizationData.contactAddress;
+    if (customizationData.footerText) document.getElementById('footerText').value = customizationData.footerText;
+  } catch (error) {
+    console.error('[LOAD CUSTOMIZATION ERROR]', error);
+  }
 
   const initialValues = {
     companyName: document.getElementById('companyName').value,
@@ -629,7 +876,7 @@ function initCustomizationPage() {
     return true;
   };
 
-  saveBtn?.addEventListener('click', (event) => {
+  saveBtn?.addEventListener('click', async (event) => {
     event.preventDefault();
     if (validateForm()) {
       const settings = {
@@ -640,8 +887,13 @@ function initCustomizationPage() {
         contactAddress: document.getElementById('contactAddress').value,
         footerText: document.getElementById('footerText').value
       };
-      localStorage.setItem(storageKeys.customization, JSON.stringify(settings));
-      showPageNotification('Content settings saved locally. Ready for backend sync.');
+      
+      try {
+        await saveCustomization(settings);
+        showPageNotification('Content settings saved successfully!');
+      } catch (error) {
+        showPageNotification(error.message || 'Failed to save settings', 'error');
+      }
     }
   });
 

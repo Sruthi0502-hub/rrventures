@@ -18,6 +18,11 @@ export class AuthController {
     return this.authService.setupSuperAdmin(dto)
   }
 
+  @Post('signup')
+  @ApiTags('signup')
+  signup(@Body() dto: SetupSuperAdminDto) {
+    return this.authService.signup(dto);
+  }
 
   @Post('login')
   @ApiTags('login')

@@ -22,28 +22,50 @@ export class AuthService {
 
   async setupSuperAdmin(dto: SetupSuperAdminDto) {
     try {
-
       const superAdmin = await this.adminModel.findOne({
         role: Role.SUPER_ADMIN
-      })
+      });
       if (superAdmin) {
-        throw new BadRequestException('Super Admin already exists')
+        throw new BadRequestException('Super Admin already exists');
       }
-      const hashpass = await bcrypt.hash(dto.password, 10)
+      const hashpass = await bcrypt.hash(dto.password, 10);
       const admin = await this.adminModel.create({
         ...dto,
         password: hashpass,
         role: Role.SUPER_ADMIN
-      })
-      return {
-        message: 'Super Admin Created Successfully', admin
-      }
-    }
-    catch (error: any) {
-      throw new BadRequestException(error.message)
+      });
+      return this.createAuthResponse(admin, 'Super Admin Created Successfully');
+    } catch (error: any) {
+      throw new BadRequestException(error.message);
     }
   }
 
+  async signup(dto: SetupSuperAdminDto) {
+    try {
+      return await this.setupSuperAdmin(dto);
+    } catch (error: any) {
+      throw error;
+    }
+  }
+
+  private createAuthResponse(admin: AdminDocument, message: string) {
+    const payload = {
+      sub: admin.id,
+      email: admin.email,
+      role: admin.role,
+    };
+
+    return {
+      message,
+      access_token: this.JwtService.sign(payload),
+      user: {
+        id: admin._id,
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+      },
+    };
+  }
 
   async Login(dto: loginDto) {
     try {
@@ -67,7 +89,12 @@ export class AuthService {
 
       return {
         message: 'Login Succesfull',
-        access_token: this.JwtService.sign(payload)
+        access_token: this.JwtService.sign(payload),
+        user: {
+          id: admin._id,
+          email: admin.email,
+          role: admin.role,
+        }
       }
     }
     catch (error: any) {
