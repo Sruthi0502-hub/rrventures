@@ -26,10 +26,10 @@ axios.interceptors.request.use(
 );
 
 const dummyServices = [
-  { id: 1, name: 'Website Development', description: 'Modern landing pages and custom e-commerce solutions.', status: 'Active', dateCreated: '2026-04-09' },
-  { id: 2, name: 'SEO Strategy', description: 'Keyword audits, content planning, and backlink management.', status: 'Active', dateCreated: '2026-05-14' },
-  { id: 3, name: 'Social Campaign', description: 'Creative ads and performance tracking for your social spend.', status: 'Paused', dateCreated: '2026-03-22' },
-  { id: 4, name: 'Analytics Audit', description: 'Improve conversions with data-backed product insights.', status: 'Draft', dateCreated: '2026-06-01' }
+  { id: 1, name: 'Website Development', description: 'Modern landing pages and custom e-commerce solutions.', price: '$2,500', location: 'Remote', image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=120&q=80', status: 'Active', dateCreated: '2026-04-09' },
+  { id: 2, name: 'SEO Strategy', description: 'Keyword audits, content planning, and backlink management.', price: '$1,200', location: 'Remote', image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=120&q=80', status: 'Active', dateCreated: '2026-05-14' },
+  { id: 3, name: 'Social Campaign', description: 'Creative ads and performance tracking for your social spend.', price: '$1,800', location: 'Hybrid', image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=120&q=80', status: 'Paused', dateCreated: '2026-03-22' },
+  { id: 4, name: 'Analytics Audit', description: 'Improve conversions with data-backed product insights.', price: '$950', location: 'On-site', image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=120&q=80', status: 'Draft', dateCreated: '2026-06-01' }
 ];
 
 const dummyAds = [
@@ -275,6 +275,9 @@ function initServicesPage() {
     const id = Number(serviceIdInput.value);
     const name = document.getElementById('serviceName').value.trim();
     const description = document.getElementById('serviceDescription').value.trim();
+    const price = document.getElementById('servicePrice').value.trim();
+    const location = document.getElementById('serviceLocation').value.trim();
+    const image = document.getElementById('serviceImage').value.trim();
     const status = document.getElementById('serviceStatus').value;
     if (!name || !description) return;
 
@@ -283,6 +286,9 @@ function initServicesPage() {
       if (service) {
         service.name = name;
         service.description = description;
+        service.price = price;
+        service.location = location;
+        service.image = image;
         service.status = status;
       }
     } else {
@@ -290,6 +296,9 @@ function initServicesPage() {
         id: Date.now(),
         name,
         description,
+        price,
+        location,
+        image,
         status,
         dateCreated: new Date().toISOString().slice(0, 10)
       });
@@ -310,6 +319,9 @@ function initServicesPage() {
       serviceIdInput.value = String(service.id);
       document.getElementById('serviceName').value = service.name;
       document.getElementById('serviceDescription').value = service.description;
+      document.getElementById('servicePrice').value = service.price || '';
+      document.getElementById('serviceLocation').value = service.location || '';
+      document.getElementById('serviceImage').value = service.image || '';
       document.getElementById('serviceStatus').value = service.status;
       if (serviceModalTitle) serviceModalTitle.textContent = 'Edit service';
     } else {
@@ -336,7 +348,7 @@ function renderServiceRows(services) {
 
   if (services.length === 0) {
     tableBody.innerHTML = `
-      <tr><td colspan="5" class="table-empty">
+      <tr><td colspan="7" class="table-empty">
         <div class="empty-state">
           <div class="empty-state-icon">📋</div>
           <h3>No services found</h3>
@@ -352,13 +364,17 @@ function renderServiceRows(services) {
 
   services.forEach((service) => {
     const row = document.createElement('tr');
+    const imageUrl = service.image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=120&q=80';
     row.innerHTML = `
       <td>
-        <div class="name-cell">
-          <strong>${service.name}</strong>
+        <div class="name-cell" style="display: flex; align-items: center; gap: 0.85rem;">
+          <img src="${imageUrl}" alt="${service.name}" style="width: 44px; height: 44px; border-radius: 12px; object-fit: cover; border: 1.5px solid var(--border);" />
+          <strong style="color: var(--text);">${service.name}</strong>
         </div>
       </td>
       <td>${service.description}</td>
+      <td><strong style="color: var(--primary);">${service.price || '-'}</strong></td>
+      <td><span style="color: var(--text); font-weight: 500;">${service.location || '-'}</span></td>
       <td><span class="status-pill ${service.status === 'Active' ? 'status-active' : service.status === 'Paused' ? 'status-paused' : 'status-draft'}">${service.status}</span></td>
       <td>${service.dateCreated || '-'}</td>
       <td class="table-actions">
