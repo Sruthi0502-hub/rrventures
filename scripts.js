@@ -1,29 +1,11 @@
 
-
-const API_BASE = '/api';
-const API_URL = "https://dashboard-management-1.onrender.com";
+const API_URL = "https://dashboard-management-u6vj.onrender.com"
 
 const storageKeys = {
-  token: 'rrventures_token',
-  user: 'rrventures_user',
-  customization: 'rrventures_customization'
+  token: 'token',
+  user: 'user'
 };
 
-axios.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-
-    if (token) {
-      config.headers.Authorization =
-        `Bearer ${token}`;
-    }
-
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
 
 const dummyServices = [
   { id: 1, name: 'Website Development', description: 'Modern landing pages and custom e-commerce solutions.', status: 'Active', dateCreated: '2026-04-09' },
@@ -68,6 +50,20 @@ function getCurrentUser() {
   }
 }
 
+// 3. Axios Interceptor Fix (Agar tum Axios use kar rahe ho toh)
+if (typeof axios !== 'undefined') {
+  axios.interceptors.request.use(
+    (config) => {
+      const token = getToken();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
+}
+
 async function apiFetch(path, options = {}) {
   const headers = {
     'Content-Type': 'application/json',
@@ -80,55 +76,126 @@ async function apiFetch(path, options = {}) {
   }
 
   try {
-    const response = await fetch(`${API_BASE}${path}`, {
+    // URL ekdum perfect clean banega bina kisi mix-up ke
+    const response = await fetch(`${API_URL}${path}`, {
       ...options,
       headers,
     });
 
+    // Response parse karne ki koshish karo
     const payload = await response.json().catch(() => ({}));
 
+    // Agar status code 200-299 ke beech nahi hai (e.g., 400, 401, 404, 500)
     if (!response.ok) {
-      throw new Error(payload.message || response.statusText || 'Request failed');
+      // Backend agar NestJS hai toh wo error message 'message' field me bhejta hai
+      const errorMsg = Array.isArray(payload.message)
+        ? payload.message.join(', ') // Validation errors ke liye
+        : payload.message || response.statusText || 'Kuch gadbad ho gayi!';
+      throw new Error(errorMsg);
     }
 
     return payload;
   } catch (error) {
-    throw new Error(error.message || 'Network request failed');
+    // Agar internet band ho ya server crash ho gaya ho
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      throw new Error('Server se connect nahi ho pa rha hai. Kripya thoda intezar karein.');
+    }
+    throw error; // Jo error aayi hai use aage pass karo
   }
 }
 
 async function loginUser(payload) {
   try {
-    return await apiFetch(`/${API_URL}auth/login`, {
+    const data = await apiFetch('/auth/login', {
       method: 'POST',
       body: JSON.stringify(payload)
     });
-  } catch (error) {
-    if (error.message.includes('Failed to fetch') || error.message.includes('Network request failed')) {
-      return {
-        token: 'rrventures-demo-token',
-        user: { name: 'RRventures Admin', email: payload.email }
-      };
+
+    // Agar backend se token aur user data sahi aaya toh save karo
+    if (data && data.token) {
+      setToken(data.token);
+      if (data.user) {
+        localStorage.setItem(storageKeys.user, JSON.stringify(data.user));
+      }
     }
-    throw error;
+    return data;
+  } catch (error) {
+    console.error("Login Error:", error.message);
+    throw error; // Isko form submit handler pakdega aur UI par alert dikhayega
   }
 }
 
+// --- 1. Signup API Core Function ---
 async function signupUser(payload) {
   try {
-    return await apiFetch(`/${API_URL}auth/signup`, {
+    // apiFetch ko bilkul sahi clean path bhej rahe hain
+    return await apiFetch('/auth/create-super-admin', {
       method: 'POST',
       body: JSON.stringify(payload)
     });
   } catch (error) {
-    if (error.message.includes('Failed to fetch') || error.message.includes('Network request failed')) {
-      return {
-        token: 'rrventures-demo-token',
-        user: { name: payload.name, email: payload.email }
-      };
-    }
-    throw error;
+    console.error("Signup Error in Method:", error.message);
+    throw error; // Is error ko neeche wala event listener pakdega aur UI par dikhayega
   }
+}
+
+// --- 2. Signup Form Submit Handler (DOM Connection) ---
+// HTML ke form id 'signupForm' ko target kiya
+const signupForm = document.getElementById('signupForm');
+
+if (signupForm) {
+  signupForm.addEventListener('submit', async (event) => {
+    event.preventDefault(); // Page ko automatic reload hone se rokne ke liye
+
+    // Tumhaare HTML ke exact IDs ko pakda
+    const nameInput = document.getElementById('signupName');
+    const emailInput = document.getElementById('signupEmail');
+    const passwordInput = document.getElementById('signupPassword');
+    const statusDiv = document.getElementById('signupStatus');
+
+    // UI par loading state dikhane ke liye (Blue Color)
+    if (statusDiv) {
+      statusDiv.style.color = '#3182ce';
+      statusDiv.style.display = 'block';
+      statusDiv.textContent = 'Account create ho rha hai, kripya intezar karein...';
+    }
+
+    // Data payload taiyar kiya
+    const payload = {
+      name: nameInput.value.trim(),
+      email: emailInput.value.trim(),
+      password: passwordInput.value
+    };
+
+    try {
+      // API call kiya
+      const response = await signupUser(payload);
+
+      // Success State (Green Color)
+      if (statusDiv) {
+        statusDiv.style.color = '#38a169';
+        statusDiv.textContent = 'Signup Successful! Log in page par bheja ja rha hai...';
+      }
+
+      // Input fields ko saaf (clear) kar diya
+      nameInput.value = '';
+      emailInput.value = '';
+      passwordInput.value = '';
+
+      // 2 second ka delay dekar user ko login page (index.html) par bhej diya
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 2000);
+
+    } catch (error) {
+      // Error State (Red Color)
+      // Jo bhi error backend (NestJS) se aayegi ya network crash hoga, wo yahan dikhega
+      if (statusDiv) {
+        statusDiv.style.color = '#e53e3e';
+        statusDiv.textContent = error.message;
+      }
+    }
+  });
 }
 
 function showNotification(message, type = 'success') {
