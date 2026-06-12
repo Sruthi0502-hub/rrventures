@@ -94,26 +94,23 @@ async function apiFetch(path, options = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const isFormData = Boolean(options.isFormData) || options.body instanceof FormData;
-  if (!isFormData) {
+  const fetchOptions = { ...options };
+
+  if (options.body instanceof FormData) {
+    // don't set Content-Type, don't stringify
+    fetchOptions.body = options.body;
+  } else {
     headers['Content-Type'] = 'application/json';
+    if (options.body && typeof options.body !== 'string') {
+      fetchOptions.body = JSON.stringify(options.body);
+    }
   }
 
+  fetchOptions.headers = headers;
+
   try {
-    let bodyPreview = '';
-    if (isFormData) {
-      bodyPreview = '[FormData]';
-    } else if (options.body) {
-      bodyPreview = typeof options.body === 'string' ? safeParseJSON(options.body, options.body) : options.body;
-    }
-
+    const bodyPreview = options.body instanceof FormData ? '[FormData]' : options.body;
     console.log(`[API] ${options.method || 'GET'} ${API_BASE_URL}${path}`, bodyPreview);
-
-    const fetchOptions = { ...options, headers };
-
-    if (!isFormData && fetchOptions.body && typeof fetchOptions.body !== 'string') {
-      fetchOptions.body = JSON.stringify(fetchOptions.body);
-    }
 
     const response = await fetch(`${API_BASE_URL}${path}`, fetchOptions);
     const payload = await response.json().catch(() => ({}));
@@ -319,7 +316,6 @@ async function createProperty(formData) {
     return await apiFetch('/properties/create-properties', {
       method: 'POST',
       body: formData,
-      isFormData: true,
     });
   } catch (error) {
     console.error('[PROPERTIES CREATE ERROR]', error.message);
@@ -332,7 +328,6 @@ async function updateProperty(id, formData) {
     return await apiFetch(`/properties/${id}`, {
       method: 'PATCH',
       body: formData,
-      isFormData: true,
     });
   } catch (error) {
     console.error('[PROPERTIES UPDATE ERROR]', error.message);
@@ -361,18 +356,26 @@ async function fetchAds() {
   }
 }
 
-async function createAd(payload) {
+async function createAd(formData) {
   try {
-    return await apiFetch('/properties/create-properties', { method: 'POST', body: payload });
+    return await apiFetch('/ads', {
+      method: 'POST',
+      body: formData,
+      isFormData: true,
+    });
   } catch (error) {
     console.error('[ADS CREATE ERROR]', error.message);
     throw error;
   }
 }
 
-async function updateAd(id, payload) {
+async function updateAd(id, formData) {
   try {
-    return await apiFetch(`/ads/${id}`, { method: 'PUT', body: payload });
+    return await apiFetch(`/ads/${id}`, {
+      method: 'PATCH',
+      body: formData,
+      isFormData: true,
+    });
   } catch (error) {
     console.error('[ADS UPDATE ERROR]', error.message);
     throw error;
@@ -481,25 +484,38 @@ function attachAuthListeners(type) {
   });
 }
 
+async function fetchAdminName() {
+  try {
+    const response = await apiFetch('/admins/find-Admin', { method: 'GET' });
+    const admins = Array.isArray(response) ? response : response.data || [];
+    const user = getCurrentUser();
+    const adminData = admins.find(a => a.email === user.email);
+    
+    if (adminData && adminData.name) {
+      user.name = adminData.name;
+      localStorage.setItem(storageKeys.user, JSON.stringify(user));
+      return adminData.name;
+    }
+  } catch (error) {
+    console.error('[FETCH ADMIN NAME ERROR]', error);
+  }
+  return null;
+}
+
 // ==========================================
 // CORE PAGES LOGIC
 // ==========================================
 async function initDashboardPage() {
-  redirectIfNotAuthenticated();
-  const user = getCurrentUser();
-
-  const profileName = document.querySelector('.profile-pill span');
-  const profileSmall = document.querySelector('.profile-pill small');
-  const profileLetter = document.querySelector('.profile-ring');
-
-  if (profileName) profileName.textContent = user.name || user.email || 'RRventures';
-  if (profileSmall) profileSmall.textContent = user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'Administrator';
-  if (profileLetter) profileLetter.textContent = (user.name || user.email || 'R').charAt(0).toUpperCase();
-
   const totalServicesCount = document.getElementById('totalServicesCount');
+  const totalAdsCount = document.getElementById('totalAdsCount');
+  const activeAdsCount = document.getElementById('activeAdsCount');
 
   try {
-    const servicesRes = await fetchServices();
+    const [servicesRes, adsRes] = await Promise.all([
+      fetchServices(),
+      fetchAds()
+    ]);
+    
     const services = Array.isArray(servicesRes)
       ? servicesRes
       : Array.isArray(servicesRes.property)
@@ -507,15 +523,22 @@ async function initDashboardPage() {
         : Array.isArray(servicesRes.data)
           ? servicesRes.data
           : [];
+    
+    const ads = Array.isArray(adsRes)
+      ? adsRes
+      : Array.isArray(adsRes.data)
+        ? adsRes.data
+        : [];
 
     if (totalServicesCount) totalServicesCount.textContent = String(services.length);
+    if (totalAdsCount) totalAdsCount.textContent = String(ads.length);
+    if (activeAdsCount) activeAdsCount.textContent = String(Math.max(0, ads.length - 1));
   } catch (error) {
     console.error('[DASHBOARD ERROR]', error);
   }
 }
 
 async function initServicesPage() {
-  redirectIfNotAuthenticated();
   const searchInput = document.getElementById('serviceSearch');
   const statusFilter = document.getElementById('statusFilter');
   const addButton = document.getElementById('openServiceModal');
@@ -590,6 +613,7 @@ async function initServicesPage() {
   });
 
   function openServiceModal(serviceId = null) {
+    const imageInput = document.getElementById('serviceImage');
     if (serviceId) {
       const service = servicesData.find((item) => item.id === serviceId || item._id === serviceId);
       if (!service) return;
@@ -597,16 +621,35 @@ async function initServicesPage() {
       document.getElementById('serviceName').value = service.title || service.name || '';
       document.getElementById('serviceDescription').value = service.description || '';
       document.getElementById('servicePrice').value = service.price || '';
+      document.getElementById('serviceLocation').value = service.location || '';
       document.getElementById('serviceStatus').value = service.status || 'Active';
+      if (imageInput) imageInput.removeAttribute('required');
       if (serviceModalTitle) serviceModalTitle.textContent = 'Edit property';
     } else {
       serviceForm.reset();
       serviceIdInput.value = '';
+      if (imageInput) imageInput.setAttribute('required', 'required');
+      if (serviceModalTitle) serviceModalTitle.textContent = 'Add property';
     }
     modal?.classList.add('active');
   }
 
   function closeServiceModal() { modal?.classList.remove('active'); }
+
+  window.editProperty = openServiceModal;
+  window.removeProperty = async (propertyId) => {
+    if (confirm('Are you sure you want to delete this property?')) {
+      try {
+        await deleteProperty(propertyId);
+        await loadServices();
+        renderServiceRows(servicesData);
+        showNotification('Property deleted successfully');
+      } catch (error) {
+        showNotification(error.message || 'Failed to delete property', 'error');
+      }
+    }
+  };
+
   renderServiceRows(servicesData);
 }
 
@@ -621,24 +664,340 @@ function renderServiceRows(services) {
   const tableBody = document.getElementById('serviceRows');
   if (!tableBody) return;
   tableBody.innerHTML = '';
-  // ... (Baki render service row table logic jo perfectly dynamic chal rha h)
+  
+  if (services.length === 0) {
+    tableBody.innerHTML = `
+      <tr><td colspan="7" class="table-empty">
+        <div class="empty-state">
+          <div class="empty-state-icon">📋</div>
+          <h3>No properties found</h3>
+          <p>Create your first property to get started managing your listings.</p>
+          <button class="btn btn-primary icon-btn" onclick="document.getElementById('openServiceModal')?.click()">
+            <i data-lucide="plus"></i>Add Property
+          </button>
+        </div>
+      </td></tr>
+    `;
+    return;
+  }
+
+  services.forEach((service) => {
+    const row = document.createElement('tr');
+    const imageUrl = service.image
+      ? (service.image.startsWith('http') ? service.image : `${API_BASE_URL}/uploads/${service.image}`)
+      : 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=120&q=80';
+    const serviceId = service._id || service.id;
+    const title = service.title || service.name || 'Untitled';
+    row.innerHTML = `
+      <td>
+        <div class="name-cell" style="display: flex; align-items: center; gap: 0.85rem;">
+          <img src="${imageUrl}" alt="${title}" style="width: 44px; height: 44px; border-radius: 12px; object-fit: cover; border: 1.5px solid var(--border);" />
+          <strong style="color: var(--text);">${title}</strong>
+        </div>
+      </td>
+      <td>${service.description || '-'}</td>
+      <td><strong style="color: var(--primary);">${service.price || '-'}</strong></td>
+      <td><span style="color: var(--text); font-weight: 500;">${service.location || '-'}</span></td>
+      <td><span class="status-pill ${service.status === 'Active' ? 'status-active' : service.status === 'Paused' ? 'status-paused' : 'status-draft'}">${service.status || 'Draft'}</span></td>
+      <td>${service.createdAt || service.updatedAt || '-'}</td>
+      <td class="table-actions">
+        <button class="btn btn-secondary action-btn" type="button" onclick="editProperty('${serviceId}')">Edit</button>
+        <button class="btn btn-tertiary action-btn" type="button" onclick="removeProperty('${serviceId}')">Delete</button>
+      </td>
+    `;
+    tableBody.appendChild(row);
+  });
+}
+
+async function initAdsPage() {
+  const searchInput = document.getElementById('adSearch');
+  const form = document.getElementById('newAdForm');
+  const titleInput = document.getElementById('adTitle');
+  const priceInput = document.getElementById('adPrice');
+  const descriptionInput = document.getElementById('adDescription');
+  const imageInput = document.getElementById('adImage');
+  const indexField = document.getElementById('currentAdIndex');
+  const preview = document.getElementById('imagePreview');
+  const submitButton = form?.querySelector('button[type="submit"]');
+
+  await loadAds();
+
+  const updatePreview = () => {
+    const file = imageInput?.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        preview.style.backgroundImage = `url('${e.target.result}')`;
+        preview.textContent = '';
+      };
+      reader.readAsDataURL(file);
+    } else {
+      preview.style.backgroundImage = 'none';
+      preview.textContent = 'Image preview';
+    }
+  };
+
+  const filterAds = () => {
+    const query = searchInput.value.toLowerCase();
+    const filtered = adsData.filter((ad) => {
+      return (ad.title || '').toLowerCase().includes(query) || (ad.description || '').toLowerCase().includes(query);
+    });
+    renderAdCards(filtered);
+  };
+
+  imageInput?.addEventListener('change', updatePreview);
+  searchInput?.addEventListener('input', filterAds);
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const title = titleInput.value.trim();
+    const description = descriptionInput.value.trim();
+    const price = priceInput.value.trim();
+    const imageFile = imageInput?.files?.[0];
+    const adId = indexField.value.trim();
+    
+    if (!title || !description || (!adId && !imageFile)) {
+      showNotification('Please fill in required fields', 'error');
+      return;
+    }
+
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = adId ? 'Updating...' : 'Creating...';
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('description', description);
+      if (price) formData.append('price', price);
+      if (imageFile) formData.append('image', imageFile);
+      
+      if (adId) {
+        await updateAd(adId, formData);
+        showNotification('Ad updated successfully');
+      } else {
+        await createAd(formData);
+        showNotification('Ad created successfully');
+      }
+
+      await loadAds();
+      renderAdCards(adsData);
+      form.reset();
+      indexField.value = '';
+      updatePreview();
+      if (submitButton) submitButton.textContent = 'Create Advertisement';
+    } catch (error) {
+      showNotification(error.message || 'Failed to save ad', 'error');
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        if (!submitButton.textContent.includes('Create') && !submitButton.textContent.includes('Update')) {
+          submitButton.textContent = 'Create Advertisement';
+        }
+      }
+    }
+  });
+
+  renderAdCards(adsData);
+  window.editAd = (adId) => {
+    const ad = adsData.find(a => a.id === adId || a._id === adId);
+    if (!ad) return;
+    titleInput.value = ad.title || '';
+    descriptionInput.value = ad.description || '';
+    priceInput.value = ad.price || '';
+    imageInput.value = '';
+    indexField.value = ad._id || ad.id;
+    updatePreview();
+    if (submitButton) submitButton.textContent = 'Update Advertisement';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  window.removeAd = async (adId) => {
+    if (confirm('Are you sure you want to delete this ad?')) {
+      try {
+        await deleteAd(adId);
+        await loadAds();
+        renderAdCards(adsData);
+        showNotification('Ad deleted successfully');
+      } catch (error) {
+        showNotification(error.message || 'Failed to delete ad', 'error');
+      }
+    }
+  };
+}
+
+async function loadAds() {
+  try {
+    const response = await fetchAds();
+    adsData = Array.isArray(response) ? response : Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    console.error('[LOAD ADS ERROR]', error);
+    adsData = [];
+  }
+}
+
+function renderAdCards(ads) {
+  const adGrid = document.getElementById('adGrid');
+  if (!adGrid) return;
+  adGrid.innerHTML = '';
+
+  if (ads.length === 0) {
+    adGrid.innerHTML = `
+      <div class="empty-state" style="grid-column: 1/-1; min-height: 300px;">
+        <div class="empty-state-icon">📢</div>
+        <h3>No advertisements yet</h3>
+        <p>Create your first advertisement campaign to get started.</p>
+      </div>
+    `;
+    return;
+  }
+
+  ads.forEach((ad) => {
+    const card = document.createElement('article');
+    card.className = 'ad-card';
+    const adId = ad._id || ad.id;
+    const priceDisplay = ad.price ? `<p class="ad-price" style="color: var(--primary); font-weight: bold; margin-top: 0.5rem;">$${ad.price}</p>` : '';
+    const adImageUrl = ad.image
+      ? (ad.image.startsWith('http') ? ad.image : `${API_BASE_URL}/uploads/${ad.image}`)
+      : 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=120&q=80';
+    card.innerHTML = `
+      <div class="ad-media" style="background-image: url('${adImageUrl}'); background-size: cover; background-position: center;">
+        ${ad.image ? '' : 'Image preview'}
+      </div>
+      <div class="ad-content">
+        <h3>${ad.title || 'Untitled'}</h3>
+        <p>${ad.description || '-'}</p>
+        ${priceDisplay}
+        <div class="ad-actions">
+          <button class="btn btn-secondary" type="button" onclick="editAd('${adId}')">Edit</button>
+          <button class="btn btn-tertiary" type="button" onclick="removeAd('${adId}')">Delete</button>
+        </div>
+      </div>
+    `;
+    adGrid.appendChild(card);
+  });
+}
+
+async function initCustomizationPage() {
+  const saveBtn = document.getElementById('saveBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const notification = document.getElementById('notification');
+  const descriptionInput = document.getElementById('companyDescription');
+  const descriptionCount = document.getElementById('descriptionCount');
+
+  let customizationData = {};
+  try {
+    const response = await fetchCustomization();
+    customizationData = response.data || response || {};
+    
+    if (customizationData.companyName) document.getElementById('companyName').value = customizationData.companyName;
+    if (customizationData.companyEmail) document.getElementById('companyEmail').value = customizationData.companyEmail;
+    if (customizationData.companyDescription) descriptionInput.value = customizationData.companyDescription;
+    if (customizationData.contactPhone) document.getElementById('contactPhone').value = customizationData.contactPhone;
+    if (customizationData.contactAddress) document.getElementById('contactAddress').value = customizationData.contactAddress;
+    if (customizationData.footerText) document.getElementById('footerText').value = customizationData.footerText;
+  } catch (error) {
+    console.error('[LOAD CUSTOMIZATION ERROR]', error);
+  }
+
+  const initialValues = {
+    companyName: document.getElementById('companyName')?.value || '',
+    companyEmail: document.getElementById('companyEmail')?.value || '',
+    companyDescription: descriptionInput?.value || '',
+    contactPhone: document.getElementById('contactPhone')?.value || '',
+    contactAddress: document.getElementById('contactAddress')?.value || '',
+    footerText: document.getElementById('footerText')?.value || ''
+  };
+
+  const updateCharCount = () => {
+    if (descriptionCount) descriptionCount.textContent = descriptionInput.value.length;
+  };
+  updateCharCount();
+  descriptionInput?.addEventListener('input', updateCharCount);
+
+  const showPageNotification = (message, type = 'success') => {
+    if (notification) {
+      notification.className = `notification active notification-${type}`;
+      const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+      notification.innerHTML = `<i data-lucide="${icon}"></i><span>${message}</span>`;
+      if (window.lucide) lucide.replace({ width: 18, height: 18 });
+      setTimeout(() => notification.classList.remove('active'), 4000);
+    }
+  };
+
+  saveBtn?.addEventListener('click', async (event) => {
+    event.preventDefault();
+    const settings = {
+      companyName: document.getElementById('companyName')?.value || '',
+      companyEmail: document.getElementById('companyEmail')?.value || '',
+      companyDescription: document.getElementById('companyDescription')?.value || '',
+      contactPhone: document.getElementById('contactPhone')?.value || '',
+      contactAddress: document.getElementById('contactAddress')?.value || '',
+      footerText: document.getElementById('footerText')?.value || ''
+    };
+    
+    try {
+      await saveCustomization(settings);
+      showPageNotification('Content settings saved successfully!');
+    } catch (error) {
+      showPageNotification(error.message || 'Failed to save settings', 'error');
+    }
+  });
+
+  resetBtn?.addEventListener('click', () => {
+    Object.keys(initialValues).forEach(key => {
+      const elem = document.getElementById(key.replace(/([A-Z])/g, c => '-' + c.toLowerCase()).substring(1)) || document.getElementById(key);
+      if (elem) elem.value = initialValues[key];
+    });
+    updateCharCount();
+    showPageNotification('Form reset to last saved values.');
+  });
 }
 
 // ==========================================
 // SINGLE INTERACTIVE INITIALIZATION LIFECYCLE
 // ==========================================
-function initPage() {
+async function initPage() {
   const page = document.body.dataset.page;
   console.log("[LIFECYCLE] Current page identified as:", page);
 
   if (page === 'login') attachAuthListeners('login');
   else if (page === 'signup') attachAuthListeners('signup');
-  else if (page === 'dashboard') {
-    initDashboardPage();
-    initAdminManagement(); // Connects button modal handler safely here
+  else {
+    // Protected pages
+    redirectIfNotAuthenticated();
+    
+    // Update profile elements immediately from cached data
+    const updateProfileUI = () => {
+      const user = getCurrentUser();
+      const profileName = document.getElementById('profileName');
+      const profileRole = document.getElementById('profileRole');
+      const profileLetter = document.getElementById('profileLetter');
+
+      if (profileName) profileName.textContent = user.name || user.email || 'RRventures';
+      if (profileRole) profileRole.textContent = user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'Administrator';
+      if (profileLetter) profileLetter.textContent = (user.name || user.email || 'R').charAt(0).toUpperCase();
+    };
+
+    updateProfileUI();
+
+    // Fetch current admin name dynamically in the background to avoid blocking other page logic
+    fetchAdminName().then((newName) => {
+      if (newName) {
+        updateProfileUI();
+      }
+    });
+
+    if (page === 'dashboard') {
+      initDashboardPage();
+      initAdminManagement();
+    }
+    else if (page === 'services') initServicesPage();
+    else if (page === 'ads') initAdsPage();
+    else if (page === 'customization') initCustomizationPage();
   }
-  else if (page === 'services') initServicesPage();
-  // Add other page loaders here if required explicitly...
 }
 
 window.addEventListener('DOMContentLoaded', initPage);

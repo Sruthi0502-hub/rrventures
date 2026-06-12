@@ -10,7 +10,10 @@ export class Ad {
   description!: string;
 
   @Prop({ required: true })
-  image!: string;
+  price!: number;
+
+  @Prop({ required: true })
+  imageUrl!: string;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true })
   createdBy!: string;

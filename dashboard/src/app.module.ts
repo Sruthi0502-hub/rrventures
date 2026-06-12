@@ -7,8 +7,9 @@ import { AdminsModule } from './admins/admins.module';
 import { AuthModule } from './auth/auth.module';
 import { AdsModule } from './ads/ads.module';
 import { CustomizationModule } from './customization/customization.module';
-import { MongooseModule } from '@nestjs/mongoose/dist/mongoose.module';
+import { MongooseModule, InjectConnection } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Connection } from 'mongoose';
 
 
 @Module({
@@ -27,4 +28,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {
+  constructor(@InjectConnection() private connection: Connection) {
+    if (connection.readyState === 1) {
+      console.log('Mongoose connected successfully');
+    } else {
+      connection.on('connected', () => {
+        console.log('Mongoose connected successfully');
+      });
+    }
+  }
+}

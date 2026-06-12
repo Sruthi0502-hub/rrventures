@@ -17,7 +17,7 @@
       </button>
       <nav class="side-nav" id="sidebar-nav">
         <a href="dashboard.html"><i data-lucide="home"></i>Overview</a>
-        <a href="services.html"><i data-lucide="tool"></i>Services</a>
+        <a href="services.html"><i data-lucide="tool"></i>Properties</a>
         <a href="ads.html" class="active"><i data-lucide="megaphone"></i>Advertisements</a>
         <a href="customization.html"><i data-lucide="sliders-horizontal"></i>Customization</a>
         <a href="logout.html"><i data-lucide="log-out"></i>Logout</a>
@@ -26,12 +26,21 @@
     </aside>
 
     <main class="main-area" id="main-content" role="main">
-      <div class="page-heading">
-        <div>
+      <header class="topbar">
+        <div class="topbar-title">
           <h1>Ads Management</h1>
           <p>Publish campaigns, preview creative, and keep ads updated in a polished layout.</p>
         </div>
-      </div>
+        <div class="topbar-actions">
+          <div class="profile-pill">
+            <div class="profile-ring" id="profileLetter">R</div>
+            <div>
+              <span id="profileName">RRventures</span>
+              <small id="profileRole">Admin User</small>
+            </div>
+          </div>
+        </div>
+      </header>
 
       <div class="controls-row controls-grid">
         <div class="search-group">
@@ -45,8 +54,8 @@
         <form id="newAdForm" class="form-grid">
           <input type="hidden" id="currentAdIndex" value="" />
           <label>
-            Upload Image URL
-            <input id="adImage" type="url" placeholder="https://example.com/image.jpg" required />
+            Upload Image
+            <input id="adImage" type="file" accept="image/*" />
           </label>
           <div id="imagePreview" class="ad-media">Image preview</div>
           <label>
@@ -56,6 +65,10 @@
           <label>
             Description
             <textarea id="adDescription" placeholder="A short message for the ad campaign." required></textarea>
+          </label>
+          <label>
+            Price
+            <input id="adPrice" type="number" placeholder="Enter price" min="0" step="0.01" />
           </label>
           <button type="submit" class="btn btn-primary">Create Advertisement</button>
         </form>

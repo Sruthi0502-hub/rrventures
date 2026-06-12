@@ -1,24 +1,26 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: { createdAt: false, updatedAt: true } })
 export class Customization {
-  @Prop({ default: '' })
+  @Prop({ required: true })
   companyName!: string;
 
-  @Prop({ default: '' })
+  @Prop({ required: true })
   companyEmail!: string;
 
-  @Prop({ default: '' })
-  companyDescription!: string;
+  @Prop()
+  companyDescription?: string;
 
-  @Prop({ default: '' })
-  contactPhone!: string;
+  @Prop()
+  contactPhone?: string;
 
-  @Prop({ default: '' })
-  contactAddress!: string;
+  @Prop()
+  contactAddress?: string;
 
-  @Prop({ default: '' })
-  footerText!: string;
+  @Prop()
+  footerText?: string;
 }
 
 export const CustomizationSchema = SchemaFactory.createForClass(Customization);
+export type CustomizationDocument = Customization & Document;

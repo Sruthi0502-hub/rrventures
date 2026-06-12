@@ -34,6 +34,6 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
   await app.listen(port);
-
+  console.log(`Application is running on port ${port}`);
 }
 bootstrap();

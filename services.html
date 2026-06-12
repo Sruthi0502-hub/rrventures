@@ -22,17 +22,26 @@
         <a href="customization.html"><i data-lucide="sliders-horizontal"></i>Customization</a>
         <a href="logout.html"><i data-lucide="log-out"></i>Logout</a>
       </nav>
-      <div class="sidebar-footer">Organize every service with clarity and speed.</div>
+      <div class="sidebar-footer">Organize every property listing with clarity and speed.</div>
     </aside>
 
-      <main class="main-area" id="main-content" role="main">
-      <div class="page-heading">
-        <div>
+    <main class="main-area" id="main-content" role="main">
+      <header class="topbar">
+        <div class="topbar-title">
           <h1>Properties Management</h1>
-          <p>Manage property listings, upload images, and update details.</p>
+          <p>Manage all active listings, update statuses, and add new property packages.</p>
         </div>
-        <button id="openServiceModal" class="btn btn-primary icon-btn"><i data-lucide="plus-circle"></i><span>Add Property</span></button>
-      </div>
+        <div class="topbar-actions">
+          <button id="openServiceModal" class="btn btn-primary icon-btn"><i data-lucide="plus-circle"></i><span>Add Property</span></button>
+          <div class="profile-pill">
+            <div class="profile-ring" id="profileLetter">R</div>
+            <div>
+              <span id="profileName">RRventures</span>
+              <small id="profileRole">Admin User</small>
+            </div>
+          </div>
+        </div>
+      </header>
 
       <div class="controls-row controls-grid">
         <div class="search-group">
@@ -58,6 +67,7 @@
                 <th>Property Title</th>
                 <th>Description</th>
                 <th>Price</th>
+                <th>Location</th>
                 <th>Status</th>
                 <th>Date Created</th>
                 <th>Actions</th>
@@ -85,7 +95,7 @@
         </label>
         <label>
           Price
-          <input type="text" id="servicePrice" placeholder="$1,500" required />
+          <input type="number" id="servicePrice" placeholder="1500" min="0" step="0.01" required />
         </label>
         <label>
           Location
