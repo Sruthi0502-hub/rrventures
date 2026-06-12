@@ -159,7 +159,7 @@ async function loginUser(payload) {
             userId: decoded.sub,
             email: decoded.email,
             role: decoded.role, // Yahan backend se 'admin' ya 'super-admin' milega
-            name: decoded.name || decoded.email?.split('@')[0]
+            name: decoded.name
           };
           localStorage.setItem(storageKeys.user, JSON.stringify(userData));
           console.log(`[LOGIN SUCCESS] User Role from JWT: ${decoded.role}`);
@@ -976,7 +976,7 @@ async function initPage() {
       const profileRole = document.getElementById('profileRole');
       const profileLetter = document.getElementById('profileLetter');
 
-      if (profileName) profileName.textContent = user.name || user.email || 'RRventures';
+      if (profileName) profileName.textContent = user.name || user.email
       if (profileRole) profileRole.textContent = user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'Administrator';
       if (profileLetter) profileLetter.textContent = (user.name || user.email || 'R').charAt(0).toUpperCase();
     };
