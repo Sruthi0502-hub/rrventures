@@ -313,7 +313,7 @@ async function fetchServices() {
 
 async function createProperty(formData) {
   try {
-    return await apiFetch('/properties/create-properties', {
+    return await apiFetch('/properties/create-property', {
       method: 'POST',
       body: formData,
     });
@@ -358,7 +358,7 @@ async function fetchAds() {
 
 async function createAd(formData) {
   try {
-    return await apiFetch('/ads', {
+    return await apiFetch('/properties/create-properties', {
       method: 'POST',
       body: formData,
       isFormData: true,
@@ -490,7 +490,7 @@ async function fetchAdminName() {
     const admins = Array.isArray(response) ? response : response.data || [];
     const user = getCurrentUser();
     const adminData = admins.find(a => a.email === user.email);
-    
+
     if (adminData && adminData.name) {
       user.name = adminData.name;
       localStorage.setItem(storageKeys.user, JSON.stringify(user));
@@ -515,7 +515,7 @@ async function initDashboardPage() {
       fetchServices(),
       fetchAds()
     ]);
-    
+
     const services = Array.isArray(servicesRes)
       ? servicesRes
       : Array.isArray(servicesRes.property)
@@ -523,7 +523,7 @@ async function initDashboardPage() {
         : Array.isArray(servicesRes.data)
           ? servicesRes.data
           : [];
-    
+
     const ads = Array.isArray(adsRes)
       ? adsRes
       : Array.isArray(adsRes.data)
@@ -664,7 +664,7 @@ function renderServiceRows(services) {
   const tableBody = document.getElementById('serviceRows');
   if (!tableBody) return;
   tableBody.innerHTML = '';
-  
+
   if (services.length === 0) {
     tableBody.innerHTML = `
       <tr><td colspan="7" class="table-empty">
@@ -756,7 +756,7 @@ async function initAdsPage() {
     const price = priceInput.value.trim();
     const imageFile = imageInput?.files?.[0];
     const adId = indexField.value.trim();
-    
+
     if (!title || !description || (!adId && !imageFile)) {
       showNotification('Please fill in required fields', 'error');
       return;
@@ -773,7 +773,7 @@ async function initAdsPage() {
       formData.append('description', description);
       if (price) formData.append('price', price);
       if (imageFile) formData.append('image', imageFile);
-      
+
       if (adId) {
         await updateAd(adId, formData);
         showNotification('Ad updated successfully');
@@ -891,7 +891,7 @@ async function initCustomizationPage() {
   try {
     const response = await fetchCustomization();
     customizationData = response.data || response || {};
-    
+
     if (customizationData.companyName) document.getElementById('companyName').value = customizationData.companyName;
     if (customizationData.companyEmail) document.getElementById('companyEmail').value = customizationData.companyEmail;
     if (customizationData.companyDescription) descriptionInput.value = customizationData.companyDescription;
@@ -937,7 +937,7 @@ async function initCustomizationPage() {
       contactAddress: document.getElementById('contactAddress')?.value || '',
       footerText: document.getElementById('footerText')?.value || ''
     };
-    
+
     try {
       await saveCustomization(settings);
       showPageNotification('Content settings saved successfully!');
@@ -968,7 +968,7 @@ async function initPage() {
   else {
     // Protected pages
     redirectIfNotAuthenticated();
-    
+
     // Update profile elements immediately from cached data
     const updateProfileUI = () => {
       const user = getCurrentUser();
