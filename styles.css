@@ -25,7 +25,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   min-height: 100%;
   background: var(--bg);
@@ -46,7 +47,10 @@ a:hover {
   text-decoration: underline;
 }
 
-button, input, select, textarea {
+button,
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -96,7 +100,8 @@ button {
   height: 18px;
 }
 
-.auth-shell, .app-shell {
+.auth-shell,
+.app-shell {
   min-height: 100vh;
 }
 
@@ -107,7 +112,8 @@ button {
   padding: 3rem;
 }
 
-.auth-panel, .auth-visual {
+.auth-panel,
+.auth-visual {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -126,7 +132,7 @@ button {
   margin-bottom: 2rem;
 }
 
-.auth-panel > .brand-block {
+.auth-panel>.brand-block {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -137,7 +143,7 @@ button {
   animation: slideDownFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.auth-panel > .brand-block h1 {
+.auth-panel>.brand-block h1 {
   margin: 0.75rem 0 0;
   font-size: 2.6rem;
   font-weight: 900;
@@ -150,7 +156,7 @@ button {
   transition: transform 0.3s ease, filter 0.3s ease;
 }
 
-.auth-panel > .brand-block p {
+.auth-panel>.brand-block p {
   margin: 0.5rem 0 0;
   color: var(--muted);
   font-size: 1rem;
@@ -158,7 +164,7 @@ button {
   max-width: 380px;
 }
 
-.auth-panel > .brand-block:hover h1 {
+.auth-panel>.brand-block:hover h1 {
   transform: scale(1.02);
   filter: brightness(1.1);
 }
@@ -176,7 +182,7 @@ button {
   transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
 }
 
-.auth-panel > .brand-block .brand-mark {
+.auth-panel>.brand-block .brand-mark {
   width: 72px;
   height: 72px;
   border-radius: 22px;
@@ -190,7 +196,10 @@ button {
   box-shadow: 0 8px 25px rgba(14, 165, 164, 0.35);
 }
 
-.auth-card, .visual-card, .panel-card, .stat-card {
+.auth-card,
+.visual-card,
+.panel-card,
+.stat-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -221,6 +230,7 @@ button {
     opacity: 0;
     transform: translateY(-24px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -232,6 +242,7 @@ button {
     opacity: 0;
     transform: translateY(24px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -242,6 +253,7 @@ button {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -252,9 +264,11 @@ button {
     transform: scale(0.8) rotate(-10deg);
     opacity: 0;
   }
+
   70% {
     transform: scale(1.1) rotate(3deg);
   }
+
   100% {
     transform: scale(1) rotate(0deg);
     opacity: 1;
@@ -325,7 +339,7 @@ textarea {
   width: min(100%, 480px);
   padding: 2.5rem;
   border-radius: 30px;
-  background: linear-gradient(180deg, rgba(14,165,164,0.13), rgba(255,255,255,0.92));
+  background: linear-gradient(180deg, rgba(14, 165, 164, 0.13), rgba(255, 255, 255, 0.92));
 }
 
 .visual-tag {
@@ -392,7 +406,8 @@ textarea {
   justify-content: center;
 }
 
-.side-nav a.active, .side-nav a:hover {
+.side-nav a.active,
+.side-nav a:hover {
   background: rgba(14, 165, 164, 0.18);
   color: #0F172A;
   transform: translateX(2px);
@@ -488,12 +503,15 @@ textarea {
 .stat-card:nth-child(1) {
   border-color: rgba(20, 184, 166, 0.25);
 }
+
 .stat-card:nth-child(2) {
   border-color: rgba(139, 92, 246, 0.25);
 }
+
 .stat-card:nth-child(3) {
   border-color: rgba(16, 185, 129, 0.25);
 }
+
 .stat-card:nth-child(4) {
   border-color: rgba(59, 130, 246, 0.25);
 }
@@ -502,14 +520,17 @@ textarea {
   border-color: rgba(20, 184, 166, 0.5);
   box-shadow: 0 15px 35px rgba(20, 184, 166, 0.12);
 }
+
 .stat-card:nth-child(2):hover {
   border-color: rgba(139, 92, 246, 0.5);
   box-shadow: 0 15px 35px rgba(139, 92, 246, 0.12);
 }
+
 .stat-card:nth-child(3):hover {
   border-color: rgba(16, 185, 129, 0.5);
   box-shadow: 0 15px 35px rgba(16, 185, 129, 0.12);
 }
+
 .stat-card:nth-child(4):hover {
   border-color: rgba(59, 130, 246, 0.5);
   box-shadow: 0 15px 35px rgba(59, 130, 246, 0.12);
@@ -592,7 +613,7 @@ textarea {
 .chart-placeholder {
   min-height: 240px;
   border-radius: 24px;
-  background: linear-gradient(180deg, rgba(79,70,229,0.08), rgba(248,250,252,1));
+  background: linear-gradient(180deg, rgba(79, 70, 229, 0.08), rgba(248, 250, 252, 1));
   border: 1px solid rgba(79, 70, 229, 0.1);
   display: grid;
   place-items: center;
@@ -700,7 +721,8 @@ textarea:focus {
   box-shadow: 0 0 0 4px rgba(14, 165, 164, 0.15);
 }
 
-.table-card, .cards-panel {
+.table-card,
+.cards-panel {
   margin-top: 1rem;
 }
 
@@ -899,6 +921,7 @@ textarea {
   .dashboard-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
   .analytics-grid {
     grid-template-columns: 1fr;
   }
@@ -908,43 +931,57 @@ textarea {
   .app-shell {
     grid-template-columns: 1fr;
   }
+
   .sidebar {
     position: relative;
     height: auto;
   }
+
   .topbar {
     flex-direction: column;
     align-items: stretch;
   }
-  .grid-columns, .card-grid {
+
+  .grid-columns,
+  .card-grid {
     grid-template-columns: 1fr;
   }
+
   .controls-grid {
     grid-template-columns: 1fr;
   }
+
   .table-wrapper {
     overflow-x: auto;
   }
+
   .filter-input {
     width: 100%;
   }
+
   .auth-shell {
     grid-template-columns: 1fr;
     padding: 2rem 1rem;
   }
+
   .auth-visual {
     order: -1;
   }
 }
 
 @media (max-width: 620px) {
-  .auth-card, .visual-card {
+
+  .auth-card,
+  .visual-card {
     width: 100%;
   }
+
   .auth-shell {
     padding: 1.25rem;
   }
-  .panel-card, .stat-card {
+
+  .panel-card,
+  .stat-card {
     border-radius: 22px;
   }
 }
@@ -1106,9 +1143,11 @@ textarea {
   .form-row {
     grid-template-columns: 1fr;
   }
+
   .form-actions {
     flex-direction: column-reverse;
   }
+
   .notification {
     right: 1rem;
     left: 1rem;
@@ -1169,8 +1208,13 @@ select:focus {
 }
 
 @keyframes loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .skeleton-card {
@@ -1389,7 +1433,8 @@ tbody tr:hover {
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  a, button {
+  a,
+  button {
     transition: all 0.25s ease;
   }
 }
@@ -1447,15 +1492,20 @@ tbody tr:last-child td {
   transition: color 0.2s ease;
 }
 
-.form-input:focus ~ .form-hint,
-.form-textarea:focus ~ .form-hint {
+.form-input:focus~.form-hint,
+.form-textarea:focus~.form-hint {
   color: var(--primary);
 }
 
 /* Loading Animation Refinement */
 @keyframes loadingShimmer {
-  0% { background-position: -1000px 0; }
-  100% { background-position: 1000px 0; }
+  0% {
+    background-position: -1000px 0;
+  }
+
+  100% {
+    background-position: 1000px 0;
+  }
 }
 
 .skeleton {
@@ -1471,4 +1521,14 @@ tbody tr:last-child td {
 
 .form-group:focus-within .form-hint {
   color: var(--primary);
+}
+
+/* Jab modal par 'active' class add ho, tab use dikhao */
+.modal.active {
+  display: flex !important;
+}
+
+/* Smooth pop-up animation ke liye card ko scale up karein */
+.modal.active .auth-card {
+  transform: scale(1) !important;
 }

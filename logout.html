@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RRventures Admin | Logging Out</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
   <div class="auth-shell" role="application">
     <div class="auth-panel">
@@ -18,11 +20,12 @@
       </div>
     </div>
   </div>
-
+  <a href="logout.html" class="logout-btn">Logout</a>
   <script>
+    // FIXED: Storage keys matched exactly with scripts.js
     const storageKeys = {
-      token: 'rrventures_token',
-      user: 'rrventures_user'
+      token: 'token',
+      user: 'user'
     };
 
     function clearSession() {
@@ -32,10 +35,12 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       clearSession();
+      // Fast redirect for better user experience
       setTimeout(() => {
-        window.location.href = 'index.html';
-      }, 1300);
+        window.location.replace('index.html'); // replace keeps history clean
+      }, 800);
     });
   </script>
 </body>
+
 </html>
