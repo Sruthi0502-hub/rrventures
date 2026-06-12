@@ -159,7 +159,7 @@ async function loginUser(payload) {
             userId: decoded.sub,
             email: decoded.email,
             role: decoded.role, // Yahan backend se 'admin' ya 'super-admin' milega
-            name: decoded.name || 'RRventures Admin'
+            name: decoded.name || decoded.email?.split('@')[0]
           };
           localStorage.setItem(storageKeys.user, JSON.stringify(userData));
           console.log(`[LOGIN SUCCESS] User Role from JWT: ${decoded.role}`);
