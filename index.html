@@ -28,17 +28,19 @@
         <p>Sign in to continue managing services, ads, and settings.</p>
 
         <form id="loginForm" class="form-grid" aria-label="Login form">
-          <label>
-            Email
+          <div class="form-group">
+            <label for="loginEmail" class="form-label">Email</label>
             <input type="email" id="loginEmail" name="loginEmail" placeholder="you@company.com" required />
-          </label>
-          <label>
-            Password
+            <div class="invalid-feedback" id="loginEmailFeedback"></div>
+          </div>
+          <div class="form-group">
+            <label for="loginPassword" class="form-label">Password</label>
             <input type="password" id="loginPassword" name="loginPassword" placeholder="••••••••" required />
-          </label>
+            <div class="invalid-feedback" id="loginPasswordFeedback"></div>
+          </div>
           <div id="loginStatus" class="form-status" aria-live="polite"></div>
 
-          <button type="submit" class="btn btn-primary">Log In</button>
+          <button type="submit" class="btn btn-primary" id="loginSubmitBtn">Log In</button>
         </form>
 
         <p class="form-note">

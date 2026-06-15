@@ -427,12 +427,180 @@ function redirectIfNotAuthenticated() {
   }
 }
 
+function validateEmail(email) {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email);
+}
+
+function validatePassword(password) {
+  const errors = [];
+  if (password.length < 8) {
+    errors.push('Password must be at least 8 characters long.');
+  }
+  if (!/[a-zA-Z]/.test(password)) {
+    errors.push('Password must contain at least one alphabet letter.');
+  }
+  if (!/[0-9]/.test(password)) {
+    errors.push('Password must contain at least one number.');
+  }
+  if (!/[!@#$%^&*()_+\-=\[\]{}|;:\'",.<>?/\\~`%]/.test(password)) {
+    errors.push('Password must contain at least one special character.');
+  }
+  return {
+    isValid: errors.length === 0,
+    errors: errors
+  };
+}
+
+function setupFormValidation(type) {
+  const form = document.getElementById(type === 'login' ? 'loginForm' : 'signupForm');
+  if (!form) return;
+
+  const submitButton = form.querySelector('button[type="submit"]');
+  const emailInput = document.getElementById(type === 'login' ? 'loginEmail' : 'signupEmail');
+  const passwordInput = document.getElementById(type === 'login' ? 'loginPassword' : 'signupPassword');
+  const nameInput = type === 'signup' ? document.getElementById('signupName') : null;
+
+  const emailFeedback = document.getElementById(type === 'login' ? 'loginEmailFeedback' : 'signupEmailFeedback');
+  const passwordFeedback = document.getElementById(type === 'login' ? 'loginPasswordFeedback' : 'signupPasswordFeedback');
+  const nameFeedback = type === 'signup' ? document.getElementById('signupNameFeedback') : null;
+
+  let isEmailValid = false;
+  let isPasswordValid = false;
+  let isNameValid = type === 'login';
+
+  function checkFormValidity() {
+    if (isEmailValid && isPasswordValid && isNameValid) {
+      submitButton.disabled = false;
+    } else {
+      submitButton.disabled = true;
+    }
+  }
+
+  submitButton.disabled = true;
+
+  function validateEmailField(showError = true) {
+    const value = emailInput.value.trim();
+    if (!value) {
+      isEmailValid = false;
+      emailInput.classList.remove('valid', 'invalid');
+      if (emailFeedback) {
+        emailFeedback.textContent = 'Email is required.';
+        if (showError) emailFeedback.classList.add('visible');
+        else emailFeedback.classList.remove('visible');
+      }
+    } else if (!validateEmail(value)) {
+      isEmailValid = false;
+      emailInput.classList.add('invalid');
+      emailInput.classList.remove('valid');
+      if (emailFeedback) {
+        emailFeedback.textContent = 'Invalid email format. Please enter a valid email (e.g., user@example.com)';
+        if (showError) emailFeedback.classList.add('visible');
+        else emailFeedback.classList.remove('visible');
+      }
+    } else {
+      isEmailValid = true;
+      emailInput.classList.add('valid');
+      emailInput.classList.remove('invalid');
+      if (emailFeedback) {
+        emailFeedback.textContent = '';
+        emailFeedback.classList.remove('visible');
+      }
+    }
+    checkFormValidity();
+  }
+
+  function validatePasswordField(showError = true) {
+    const value = passwordInput.value;
+    if (!value) {
+      isPasswordValid = false;
+      passwordInput.classList.remove('valid', 'invalid');
+      if (passwordFeedback) {
+        passwordFeedback.textContent = 'Password is required.';
+        if (showError) passwordFeedback.classList.add('visible');
+        else passwordFeedback.classList.remove('visible');
+      }
+    } else {
+      const res = validatePassword(value);
+      if (!res.isValid) {
+        isPasswordValid = false;
+        passwordInput.classList.add('invalid');
+        passwordInput.classList.remove('valid');
+        if (passwordFeedback) {
+          passwordFeedback.innerHTML = res.errors.join('<br>');
+          if (showError) passwordFeedback.classList.add('visible');
+          else passwordFeedback.classList.remove('visible');
+        }
+      } else {
+        isPasswordValid = true;
+        passwordInput.classList.add('valid');
+        passwordInput.classList.remove('invalid');
+        if (passwordFeedback) {
+          passwordFeedback.textContent = '';
+          passwordFeedback.classList.remove('visible');
+        }
+      }
+    }
+    checkFormValidity();
+  }
+
+  function validateNameField(showError = true) {
+    if (!nameInput) return;
+    const value = nameInput.value.trim();
+    if (!value) {
+      isNameValid = false;
+      nameInput.classList.remove('valid', 'invalid');
+      if (nameFeedback) {
+        nameFeedback.textContent = 'Full name is required.';
+        if (showError) nameFeedback.classList.add('visible');
+        else nameFeedback.classList.remove('visible');
+      }
+    } else if (value.length < 2) {
+      isNameValid = false;
+      nameInput.classList.add('invalid');
+      nameInput.classList.remove('valid');
+      if (nameFeedback) {
+        nameFeedback.textContent = 'Name must be at least 2 characters.';
+        if (showError) nameFeedback.classList.add('visible');
+        else nameFeedback.classList.remove('visible');
+      }
+    } else {
+      isNameValid = true;
+      nameInput.classList.add('valid');
+      nameInput.classList.remove('invalid');
+      if (nameFeedback) {
+        nameFeedback.textContent = '';
+        nameFeedback.classList.remove('visible');
+      }
+    }
+    checkFormValidity();
+  }
+
+  emailInput.addEventListener('input', () => validateEmailField(true));
+  emailInput.addEventListener('blur', () => validateEmailField(true));
+
+  passwordInput.addEventListener('input', () => validatePasswordField(true));
+  passwordInput.addEventListener('blur', () => validatePasswordField(true));
+
+  if (nameInput) {
+    nameInput.addEventListener('input', () => validateNameField(true));
+    nameInput.addEventListener('blur', () => validateNameField(true));
+  }
+
+  validateEmailField(false);
+  validatePasswordField(false);
+  if (nameInput) {
+    validateNameField(false);
+  }
+}
+
 function attachAuthListeners(type) {
   const form = document.getElementById(type === 'login' ? 'loginForm' : 'signupForm');
   const status = document.getElementById(`${type}Status`);
   if (!form) return;
 
   redirectIfAuthenticated();
+  setupFormValidation(type);
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -445,8 +613,8 @@ function attachAuthListeners(type) {
       const email = document.getElementById('loginEmail')?.value.trim();
       const password = document.getElementById('loginPassword')?.value;
 
-      if (!email || !password) {
-        setStatusMessage(status, 'Please enter both email and password');
+      if (!email || !password || !validateEmail(email) || !validatePassword(password).isValid) {
+        setStatusMessage(status, 'Please enter a valid email and password matching requirements');
         return;
       }
       payload = { email, password };
@@ -455,8 +623,8 @@ function attachAuthListeners(type) {
       const email = document.getElementById('signupEmail')?.value.trim();
       const password = document.getElementById('signupPassword')?.value;
 
-      if (!name || !email || !password) {
-        setStatusMessage(status, 'Please fill in all fields');
+      if (!name || name.length < 2 || !email || !password || !validateEmail(email) || !validatePassword(password).isValid) {
+        setStatusMessage(status, 'Please fill in all fields correctly matching requirements');
         return;
       }
       payload = { name, email, password };

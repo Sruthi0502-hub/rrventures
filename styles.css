@@ -1440,12 +1440,26 @@ tbody tr:hover {
 }
 
 /* Form Input Enhancements */
-input[type=\"email\"]:invalid:not(:focus) {
-  border-color: #f87171;
+/* Real-time Validation Styling */
+.invalid-feedback {
+  color: var(--danger);
+  font-size: 0.85rem;
+  margin-top: -0.25rem;
+  display: none;
 }
 
-input[type=\"email\"]:valid {
-  border-color: #86efac;
+.invalid-feedback.visible {
+  display: block;
+}
+
+input.invalid {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15) !important;
+}
+
+input.valid {
+  border-color: var(--success) !important;
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15) !important;
 }
 
 /* Improved Button States */
