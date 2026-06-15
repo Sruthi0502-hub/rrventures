@@ -708,13 +708,6 @@ function renderServiceRows(services) {
     `;
     tableBody.appendChild(row);
   });
-
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const userRole = (user.role || '').toLowerCase();
-  if (userRole !== 'superadmin') {
-    document.querySelectorAll('.created-by-col')
-      .forEach(el => el.style.display = 'none');
-  }
 }
 
 async function initAdsPage() {
