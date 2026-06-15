@@ -32,9 +32,9 @@ export class PropertiesService {
     async adminProperty(userId: string, user) {
         try {
             if (user.role === Role.SUPER_ADMIN) {
-                return this.propertyModel.find().populate('createdBy');
+                return this.propertyModel.find().populate('createdBy', 'name email');
             }
-            const property = await this.propertyModel.find({ createdBy: userId }).populate('createdBy').exec();
+            const property = await this.propertyModel.find({ createdBy: userId }).populate('createdBy', 'name email').exec();
             return { property }
         }
         catch (error: any) {
