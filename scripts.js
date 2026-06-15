@@ -667,7 +667,7 @@ function renderServiceRows(services) {
 
   if (services.length === 0) {
     tableBody.innerHTML = `
-      <tr><td colspan="7" class="table-empty">
+      <tr><td colspan="8" class="table-empty">
         <div class="empty-state">
           <div class="empty-state-icon">📋</div>
           <h3>No properties found</h3>
@@ -700,6 +700,7 @@ function renderServiceRows(services) {
       <td><span style="color: var(--text); font-weight: 500;">${service.location || '-'}</span></td>
       <td><span class="status-pill ${service.status === 'Active' ? 'status-active' : service.status === 'Paused' ? 'status-paused' : 'status-draft'}">${service.status || 'Draft'}</span></td>
       <td>${service.createdAt || service.updatedAt || '-'}</td>
+      <td class="created-by-col">${service.createdBy?.name || service.createdBy?.email || 'Unknown'}</td>
       <td class="table-actions">
         <button class="btn btn-secondary action-btn" type="button" onclick="editProperty('${serviceId}')">Edit</button>
         <button class="btn btn-tertiary action-btn" type="button" onclick="removeProperty('${serviceId}')">Delete</button>
@@ -707,6 +708,13 @@ function renderServiceRows(services) {
     `;
     tableBody.appendChild(row);
   });
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userRole = (user.role || '').toLowerCase();
+  if (userRole !== 'superadmin') {
+    document.querySelectorAll('.created-by-col')
+      .forEach(el => el.style.display = 'none');
+  }
 }
 
 async function initAdsPage() {
