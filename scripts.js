@@ -1145,9 +1145,36 @@ async function initPage() {
       const profileRole = document.getElementById('profileRole');
       const profileLetter = document.getElementById('profileLetter');
 
-      if (profileName) profileName.textContent = user.name || user.email
-      if (profileRole) profileRole.textContent = user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'Administrator';
+      if (profileName) profileName.textContent = user.name || user.email;
+      if (profileRole) {
+        let displayRole = 'Administrator';
+        if (user.role) {
+          if (user.role === 'superAdmin') {
+            displayRole = 'Super Admin';
+          } else if (user.role === 'Admin') {
+            displayRole = 'Admin';
+          } else {
+            displayRole = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+          }
+        }
+        profileRole.textContent = displayRole;
+      }
       if (profileLetter) profileLetter.textContent = (user.name || user.email || 'R').charAt(0).toUpperCase();
+
+      // Remove/hide the Create Admins category tab for regular Admins, but show it for Super Admins
+      const manageAdminsTab = document.getElementById('manageAdminsTab');
+      if (manageAdminsTab) {
+        const isSuperAdmin = user && user.role && (
+          user.role === 'superAdmin' ||
+          user.role.toLowerCase() === 'superadmin' ||
+          user.role.toLowerCase() === 'super-admin'
+        );
+        if (isSuperAdmin) {
+          manageAdminsTab.style.display = '';
+        } else {
+          manageAdminsTab.style.display = 'none';
+        }
+      }
     };
 
     updateProfileUI();
