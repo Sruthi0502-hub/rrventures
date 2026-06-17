@@ -1229,3 +1229,315 @@ async function initPage() {
 }
 
 window.addEventListener('DOMContentLoaded', initPage);
+
+// ==========================================
+// SERVICES MANAGEMENT APIS INTEGRATION
+// ==========================================
+(function() {
+  const API_BASE = 'http://localhost:3000';
+  const IMAGE_BASE = `${API_BASE}/uploads/`;
+
+  // State Variables
+  let servicesList = [];
+  let editMode = false;
+  let editingId = null;
+  let serviceModalInstance = null;
+
+  // DOM Elements
+  let servicesTableBody, alertContainer, serviceForm, serviceModalEl, serviceModalLabel;
+  let btnSubmitService, btnAddService, btnSignOut;
+  let serviceIdInput, serviceTitleInput, serviceCategoryInput, serviceDescriptionInput;
+  let serviceImageInput, labelServiceImage, feedbackServiceImage, serviceImagePreviewContainer, serviceImagePreview;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Only run if we are on the services.html page
+    if (!document.getElementById('servicesTable')) return;
+
+    servicesTableBody = document.getElementById('servicesTableBody');
+    alertContainer = document.getElementById('alertContainer');
+    serviceForm = document.getElementById('serviceForm');
+    serviceModalEl = document.getElementById('serviceModal');
+    serviceModalLabel = document.getElementById('serviceModalLabel');
+    btnSubmitService = document.getElementById('btnSubmitService');
+    btnAddService = document.getElementById('btnAddService');
+    btnSignOut = document.getElementById('btnSignOut');
+
+    serviceIdInput = document.getElementById('serviceId');
+    serviceTitleInput = document.getElementById('serviceTitle');
+    serviceCategoryInput = document.getElementById('serviceCategory');
+    serviceDescriptionInput = document.getElementById('serviceDescription');
+    serviceImageInput = document.getElementById('serviceImage');
+    labelServiceImage = document.getElementById('labelServiceImage');
+    feedbackServiceImage = document.getElementById('feedbackServiceImage');
+    serviceImagePreviewContainer = document.getElementById('serviceImagePreviewContainer');
+    serviceImagePreview = document.getElementById('serviceImagePreview');
+
+    serviceModalInstance = new bootstrap.Modal(serviceModalEl);
+
+    // Check Token
+    const token = localStorage.getItem('token');
+    if (!token) {
+      showAlert('No authentication token found in localStorage. Operations might fail. Please log in first.', 'danger');
+    }
+
+    // Fetch Services List
+    fetchServicesListLocal();
+
+    // Event Listeners
+    btnAddService.addEventListener('click', openCreateModal);
+    serviceForm.addEventListener('submit', handleFormSubmit);
+    btnSignOut.addEventListener('click', handleSignOut);
+    
+    const inputs = serviceForm.querySelectorAll('input, textarea');
+    inputs.forEach(input => {
+      input.addEventListener('input', () => {
+        input.classList.remove('is-invalid');
+      });
+    });
+    serviceImageInput.addEventListener('change', handleImageFileChange);
+  });
+
+  async function fetchServicesListLocal() {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_BASE}/provideservices/fetchAllServices`, {
+        method: 'GET',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : ''
+        }
+      });
+      if (!response.ok) throw new Error(`Server returned code ${response.status}`);
+      const data = await response.json();
+      servicesList = data.data || data || [];
+      renderTable(servicesList);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      showAlert('Failed to load services from the server. Check your connection or API status.', 'danger');
+      renderTable([]);
+    }
+  }
+
+  function renderTable(list) {
+    if (!list || list.length === 0) {
+      servicesTableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center py-4 text-muted">
+            No services found. Click "Add New Service" to insert one.
+          </td>
+        </tr>`;
+      return;
+    }
+    servicesTableBody.innerHTML = '';
+    list.forEach(s => {
+      const tr = document.createElement('tr');
+      const imageSrc = s.images ? `${IMAGE_BASE}${s.images}` : (s.image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80');
+      const title = s.title || s.name || 'Untitled Service';
+      const category = s.category || 'Fabrication';
+      const description = s.description || s.desc || '';
+      const id = s._id || s.id;
+
+      tr.innerHTML = `
+        <td class="ps-4">
+          <div class="service-thumbnail-container">
+            <img src="${imageSrc}" alt="${title}" class="service-thumbnail" onerror="this.src='https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80'">
+          </div>
+        </td>
+        <td class="fw-semibold text-steel font-display" style="font-size: 15px;">${title}</td>
+        <td>
+          <span class="admin-badge">${category}</span>
+        </td>
+        <td>
+          <div class="table-desc-cell">${description}</div>
+        </td>
+        <td class="text-end pe-4">
+          <button class="btn btn-action btn-action-edit me-1" onclick="openEditModal('${id}')">
+            Edit
+          </button>
+          <button class="btn btn-action btn-action-delete" onclick="handleDeleteClick('${id}')">
+            Delete
+          </button>
+        </td>
+      `;
+      servicesTableBody.appendChild(tr);
+    });
+  }
+
+  function showAlert(message, type = 'success') {
+    const alertEl = document.createElement('div');
+    alertEl.className = `alert alert-${type === 'danger' ? 'danger' : 'success'} alert-dismissible fade show`;
+    alertEl.role = 'alert';
+    alertEl.innerHTML = `
+      <span>${message}</span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    alertContainer.appendChild(alertEl);
+    setTimeout(() => {
+      const bsAlert = bootstrap.Alert.getInstance(alertEl);
+      if (bsAlert) bsAlert.close();
+    }, 4000);
+  }
+
+  function openCreateModal() {
+    editMode = false;
+    editingId = null;
+    serviceForm.reset();
+    serviceForm.classList.remove('was-validated');
+    const invalidFields = serviceForm.querySelectorAll('.is-invalid');
+    invalidFields.forEach(f => f.classList.remove('is-invalid'));
+    serviceModalLabel.textContent = 'Add New Service';
+    btnSubmitService.textContent = 'Create Service';
+    serviceImageInput.setAttribute('required', 'required');
+    labelServiceImage.textContent = 'Service Image File *';
+    feedbackServiceImage.textContent = 'Please select an image file.';
+    serviceImagePreviewContainer.classList.add('d-none');
+    serviceImagePreview.src = '';
+    serviceModalInstance.show();
+  }
+
+  function openEditModal(id) {
+    editMode = true;
+    editingId = id;
+    serviceForm.reset();
+    serviceForm.classList.remove('was-validated');
+    const invalidFields = serviceForm.querySelectorAll('.is-invalid');
+    invalidFields.forEach(f => f.classList.remove('is-invalid'));
+
+    const item = servicesList.find(s => String(s._id || s.id) === String(id));
+    if (!item) {
+      showAlert('Error: Service not found locally.', 'danger');
+      return;
+    }
+
+    serviceTitleInput.value = item.title || item.name || '';
+    serviceCategoryInput.value = item.category || '';
+    serviceDescriptionInput.value = item.description || item.desc || '';
+    serviceModalLabel.textContent = 'Edit Service';
+    btnSubmitService.textContent = 'Save Changes';
+    serviceImageInput.removeAttribute('required');
+    labelServiceImage.textContent = 'Change Service Image (Optional)';
+    feedbackServiceImage.textContent = 'Please choose a valid file.';
+
+    const imageSrc = item.images ? `${IMAGE_BASE}${item.images}` : (item.image || '');
+    if (imageSrc) {
+      serviceImagePreviewContainer.classList.remove('d-none');
+      serviceImagePreview.src = imageSrc;
+    } else {
+      serviceImagePreviewContainer.classList.add('d-none');
+      serviceImagePreview.src = '';
+    }
+    serviceModalInstance.show();
+  }
+
+  function handleImageFileChange(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        serviceImagePreviewContainer.classList.remove('d-none');
+        serviceImagePreview.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  async function handleFormSubmit(e) {
+    e.preventDefault();
+    let isValid = true;
+    if (!serviceTitleInput.value.trim()) {
+      serviceTitleInput.classList.add('is-invalid');
+      isValid = false;
+    }
+    if (!serviceCategoryInput.value.trim()) {
+      serviceCategoryInput.classList.add('is-invalid');
+      isValid = false;
+    }
+    if (!serviceDescriptionInput.value.trim()) {
+      serviceDescriptionInput.classList.add('is-invalid');
+      isValid = false;
+    }
+    if (!editMode && !serviceImageInput.files[0]) {
+      serviceImageInput.classList.add('is-invalid');
+      isValid = false;
+    }
+    if (!isValid) {
+      serviceForm.classList.add('was-validated');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('title', serviceTitleInput.value.trim());
+    formData.append('category', serviceCategoryInput.value.trim());
+    formData.append('description', serviceDescriptionInput.value.trim());
+
+    const file = serviceImageInput.files[0];
+    if (file) formData.append('images', file);
+
+    const token = localStorage.getItem('token');
+    const headers = { 'Authorization': token ? `Bearer ${token}` : '' };
+
+    btnSubmitService.disabled = true;
+    btnSubmitService.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...`;
+
+    try {
+      let url = editMode 
+        ? `${API_BASE}/provideservices/updateServices/${editingId}`
+        : `${API_BASE}/provideservices/create-Service`;
+      let method = editMode ? 'PATCH' : 'POST';
+
+      const response = await fetch(url, {
+        method: method,
+        headers: headers,
+        body: formData
+      });
+      const resJson = await response.json();
+      if (!response.ok) throw new Error(resJson.message || 'Operation failed');
+
+      showAlert(editMode ? 'Service updated successfully!' : 'Service created successfully!', 'success');
+      serviceModalInstance.hide();
+      fetchServicesListLocal();
+    } catch (err) {
+      console.error('Save error:', err);
+      showAlert(`Error: ${err.message || 'Failed to save service details.'}`, 'danger');
+    } finally {
+      btnSubmitService.disabled = false;
+      btnSubmitService.textContent = editMode ? 'Save Changes' : 'Create Service';
+    }
+  }
+
+  async function handleDeleteClick(id) {
+    const item = servicesList.find(s => String(s._id || s.id) === String(id));
+    const title = item ? (item.title || item.name || 'this service') : 'this service';
+    const confirmDelete = confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`);
+    if (!confirmDelete) return;
+
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_BASE}/provideservices/deleteServices/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : ''
+        }
+      });
+      const resJson = await response.json();
+      if (!response.ok) throw new Error(resJson.message || 'Deletion failed');
+
+      showAlert('Service deleted successfully!', 'success');
+      fetchServicesListLocal();
+    } catch (err) {
+      console.error('Delete error:', err);
+      showAlert(`Error: ${err.message || 'Failed to delete service.'}`, 'danger');
+    }
+  }
+
+  function handleSignOut() {
+    localStorage.removeItem('token');
+    showAlert('Signed out successfully. Token cleared.', 'success');
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  }
+
+  // Export handlers to global scope for HTML inline events
+  window.openEditModal = openEditModal;
+  window.handleDeleteClick = handleDeleteClick;
+})();

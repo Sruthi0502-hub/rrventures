@@ -1546,3 +1546,165 @@ tbody tr:last-child td {
 .modal.active .auth-card {
   transform: scale(1) !important;
 }
+
+/* ==========================================
+   SERVICES MANAGEMENT STYLES
+   ========================================== */
+:root {
+  --steel: #1c2b3a;
+  --rust: #b94a1a;
+  --rust-light: #d4602a;
+  --gray-light: #f8f9fa;
+  --gray-border: #dee2e6;
+  --orange: #b94a1a;
+  --radius: 6px;
+}
+
+.font-display {
+  font-family: 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+/* Color Accent overrides */
+.text-orange {
+  color: var(--rust-light) !important;
+}
+
+/* Button Styling */
+.btn-orange {
+  background-color: var(--rust);
+  border-color: var(--rust);
+  color: white;
+  transition: all 0.2s ease;
+  font-weight: 600;
+}
+
+.btn-orange:hover,
+.btn-orange:focus,
+.btn-orange:active {
+  background-color: var(--rust-light);
+  border-color: var(--rust-light);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.btn-orange:active {
+  transform: translateY(1px);
+}
+
+/* Table Enhancements */
+#servicesTable {
+  border-collapse: separate;
+}
+
+#servicesTable thead th {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--steel);
+  border-bottom: 2px solid var(--gray-border);
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+#servicesTable tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+#servicesTable tbody td {
+  padding-top: 14px;
+  padding-bottom: 14px;
+  font-size: 14px;
+}
+
+/* Image Thumbnail in Table */
+.service-thumbnail-container {
+  width: 70px;
+  height: 48px;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: #ebebeb;
+  border: 1px solid var(--gray-border);
+}
+
+.service-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Table Description Trim (Visual protection) */
+.table-desc-cell {
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #666;
+}
+
+/* Badge styling */
+.admin-badge {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: rgba(28, 43, 58, 0.07);
+  color: var(--steel);
+  display: inline-block;
+}
+
+/* Floating Alerts Wrapper */
+#alertContainer {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1060;
+  width: 100%;
+  max-width: 400px;
+}
+
+.alert {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: none;
+  margin-bottom: 12px;
+}
+
+/* Table Row Actions Buttons */
+.btn-action {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.btn-action-edit {
+  color: var(--steel);
+  background-color: #f1f3f5;
+  border: 1px solid var(--gray-border);
+}
+
+.btn-action-edit:hover {
+  background-color: var(--steel);
+  color: white;
+  border-color: var(--steel);
+}
+
+.btn-action-delete {
+  color: #dc3545;
+  background-color: #fff5f5;
+  border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.btn-action-delete:hover {
+  background-color: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
