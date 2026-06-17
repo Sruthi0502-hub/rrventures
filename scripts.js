@@ -1233,7 +1233,7 @@ window.addEventListener('DOMContentLoaded', initPage);
 // ==========================================
 // SERVICES MANAGEMENT APIS INTEGRATION
 // ==========================================
-(function() {
+(function () {
   const API_BASE = 'http://localhost:3000';
   const IMAGE_BASE = `${API_BASE}/uploads/`;
 
@@ -1287,7 +1287,7 @@ window.addEventListener('DOMContentLoaded', initPage);
     btnAddService.addEventListener('click', openCreateModal);
     serviceForm.addEventListener('submit', handleFormSubmit);
     btnSignOut.addEventListener('click', handleSignOut);
-    
+
     const inputs = serviceForm.querySelectorAll('input, textarea');
     inputs.forEach(input => {
       input.addEventListener('input', () => {
@@ -1479,7 +1479,7 @@ window.addEventListener('DOMContentLoaded', initPage);
     btnSubmitService.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...`;
 
     try {
-      let url = editMode 
+      let url = editMode
         ? `${API_BASE}/provideservices/updateServices/${editingId}`
         : `${API_BASE}/provideservices/create-Service`;
       let method = editMode ? 'PATCH' : 'POST';
@@ -1505,26 +1505,43 @@ window.addEventListener('DOMContentLoaded', initPage);
   }
 
   async function handleDeleteClick(id) {
+    // 1. Find the item safely
     const item = servicesList.find(s => String(s._id || s.id) === String(id));
     const title = item ? (item.title || item.name || 'this service') : 'this service';
+
     const confirmDelete = confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`);
     if (!confirmDelete) return;
 
     const token = localStorage.getItem('token');
+
+    // Set up headers dynamically
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     try {
-      const response = await fetch(`${API_BASE}/provideservices/deleteServices/${id}`, {
+      const response = await fetch(`${API_BASE}/provideservices/deletdServices/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : ''
-        }
+        headers: headers
       });
-      const resJson = await response.json();
-      if (!response.ok) throw new Error(resJson.message || 'Deletion failed');
+
+      // 2. Handle potentially empty responses (like 204 No Content) Safely
+      let resJson = {};
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        resJson = await response.json();
+      }
+
+      // 3. Throw error if response is not OK
+      if (!response.ok) {
+        throw new Error(resJson.message || `Deletion failed with status ${response.status}`);
+      }
 
       showAlert('Service deleted successfully!', 'success');
       fetchServicesListLocal();
     } catch (err) {
-      console.error('Delete error:', err);
+      console.error('Delete error detailed logging:', err);
       showAlert(`Error: ${err.message || 'Failed to delete service.'}`, 'danger');
     }
   }
