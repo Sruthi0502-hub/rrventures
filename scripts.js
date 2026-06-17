@@ -1234,8 +1234,8 @@ window.addEventListener('DOMContentLoaded', initPage);
 // SERVICES MANAGEMENT APIS INTEGRATION
 // ==========================================
 (function () {
-  const API_BASE = 'http://localhost:3000';
-  const IMAGE_BASE = `${API_BASE}/uploads/`;
+  // const API_BASE = '';
+  const IMAGE_BASE = `${API_BASE_URL}/uploads/`;
 
   // State Variables
   let servicesList = [];
@@ -1300,7 +1300,7 @@ window.addEventListener('DOMContentLoaded', initPage);
   async function fetchServicesListLocal() {
     const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`${API_BASE}/provideservices/fetchAllServices`, {
+      const response = await fetch(`${API_BASE_URL}/provideservices/fetchAllServices`, {
         method: 'GET',
         headers: {
           'Authorization': token ? `Bearer ${token}` : ''
@@ -1480,8 +1480,8 @@ window.addEventListener('DOMContentLoaded', initPage);
 
     try {
       let url = editMode
-        ? `${API_BASE}/provideservices/updateServices/${editingId}`
-        : `${API_BASE}/provideservices/create-Service`;
+        ? `${API_BASE_URL}/provideservices/updateServices/${editingId}`
+        : `${API_BASE_URL}/provideservices/create-Service`;
       let method = editMode ? 'PATCH' : 'POST';
 
       const response = await fetch(url, {
@@ -1521,7 +1521,7 @@ window.addEventListener('DOMContentLoaded', initPage);
     }
 
     try {
-      const response = await fetch(`${API_BASE}/provideservices/deletdServices/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/provideservices/deletdServices/${id}`, {
         method: 'DELETE',
         headers: headers
       });
