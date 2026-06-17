@@ -12,6 +12,7 @@ export class createAdminDto {
     @ApiProperty({ description: 'The email of the admin', example: 'john.doe@example.com' })
     email!: string
 
+
     @IsString()
     @IsNotEmpty()
     @MinLength(8, { message: 'Password must be at least 8 characters long.' })

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,12 +8,14 @@
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/lucide.min.js"></script>
 </head>
+
 <body data-page="services">
   <a href="#main-content" class="skip-link">Skip to main content</a>
   <div class="app-shell" role="application">
     <aside class="sidebar" id="sidebar" aria-label="Navigation" role="navigation">
       <a href="dashboard.html" class="brand-sm">RRventures</a>
-      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="sidebar-nav">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle navigation menu" aria-expanded="false"
+        aria-controls="sidebar-nav">
         <i data-lucide="menu"></i>
       </button>
       <nav class="side-nav" id="sidebar-nav">
@@ -32,7 +35,8 @@
           <p>Manage all active listings, update statuses, and add new property packages.</p>
         </div>
         <div class="topbar-actions">
-          <button id="openServiceModal" class="btn btn-primary icon-btn"><i data-lucide="plus-circle"></i><span>Add Property</span></button>
+          <button id="openServiceModal" class="btn btn-primary icon-btn"><i data-lucide="plus-circle"></i><span>Add
+              Property</span></button>
           <div class="profile-pill">
             <div class="profile-ring" id="profileLetter">R</div>
             <div>
@@ -70,7 +74,7 @@
                 <th>Location</th>
                 <th>Status</th>
                 <th>Date Created</th>
-                <th class="created-by-col">Created By</th>
+                <th>Admin</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -92,7 +96,8 @@
         </label>
         <label>
           Description
-          <textarea id="serviceDescription" placeholder="Describe the offering in one or two sentences." required></textarea>
+          <textarea id="serviceDescription" placeholder="Describe the offering in one or two sentences."
+            required></textarea>
         </label>
         <label>
           Price
@@ -144,4 +149,5 @@
     });
   </script>
 </body>
+
 </html>

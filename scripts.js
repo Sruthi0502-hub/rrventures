@@ -432,8 +432,24 @@ function validateEmail(email) {
   return emailRegex.test(email);
 }
 
-function validatePassword(password) {
+// Pass 'isLogin' parameter to skip strict checks during login
+function validatePassword(password, isLogin = false) {
   const errors = [];
+
+  if (!password) {
+    errors.push('Password is required.');
+    return { isValid: false, errors };
+  }
+
+  // Agar login chal raha h toh bas requirements skip karke valid return kar do
+  if (isLogin) {
+    return {
+      isValid: true,
+      errors: []
+    };
+  }
+
+  // ---- SIGNUP COMPLEXITY CHECKS ----
   if (password.length < 8) {
     errors.push('Password must be at least 8 characters long.');
   }
@@ -446,6 +462,7 @@ function validatePassword(password) {
   if (!/[!@#$%^&*()_+\-=\[\]{}|;:\'",.<>?/\\~`%]/.test(password)) {
     errors.push('Password must contain at least one special character.');
   }
+
   return {
     isValid: errors.length === 0,
     errors: errors
@@ -453,21 +470,22 @@ function validatePassword(password) {
 }
 
 function setupFormValidation(type) {
-  const form = document.getElementById(type === 'login' ? 'loginForm' : 'signupForm');
+  const isLoginMode = (type === 'login');
+  const form = document.getElementById(isLoginMode ? 'loginForm' : 'signupForm');
   if (!form) return;
 
   const submitButton = form.querySelector('button[type="submit"]');
-  const emailInput = document.getElementById(type === 'login' ? 'loginEmail' : 'signupEmail');
-  const passwordInput = document.getElementById(type === 'login' ? 'loginPassword' : 'signupPassword');
-  const nameInput = type === 'signup' ? document.getElementById('signupName') : null;
+  const emailInput = document.getElementById(isLoginMode ? 'loginEmail' : 'signupEmail');
+  const passwordInput = document.getElementById(isLoginMode ? 'loginPassword' : 'signupPassword');
+  const nameInput = !isLoginMode ? document.getElementById('signupName') : null;
 
-  const emailFeedback = document.getElementById(type === 'login' ? 'loginEmailFeedback' : 'signupEmailFeedback');
-  const passwordFeedback = document.getElementById(type === 'login' ? 'loginPasswordFeedback' : 'signupPasswordFeedback');
-  const nameFeedback = type === 'signup' ? document.getElementById('signupNameFeedback') : null;
+  const emailFeedback = document.getElementById(isLoginMode ? 'loginEmailFeedback' : 'signupEmailFeedback');
+  const passwordFeedback = document.getElementById(isLoginMode ? 'loginPasswordFeedback' : 'signupPasswordFeedback');
+  const nameFeedback = !isLoginMode ? document.getElementById('signupNameFeedback') : null;
 
   let isEmailValid = false;
   let isPasswordValid = false;
-  let isNameValid = type === 'login';
+  let isNameValid = isLoginMode;
 
   function checkFormValidity() {
     if (isEmailValid && isPasswordValid && isNameValid) {
@@ -521,7 +539,8 @@ function setupFormValidation(type) {
         else passwordFeedback.classList.remove('visible');
       }
     } else {
-      const res = validatePassword(value);
+      // Pass type === 'login' status dynamically
+      const res = validatePassword(value, isLoginMode);
       if (!res.isValid) {
         isPasswordValid = false;
         passwordInput.classList.add('invalid');
@@ -595,26 +614,28 @@ function setupFormValidation(type) {
 }
 
 function attachAuthListeners(type) {
-  const form = document.getElementById(type === 'login' ? 'loginForm' : 'signupForm');
+  const isLoginMode = (type === 'login');
+  const form = document.getElementById(isLoginMode ? 'loginForm' : 'signupForm');
   const status = document.getElementById(`${type}Status`);
   if (!form) return;
 
-  redirectIfAuthenticated();
+  // Make sure these global hooks exist elsewhere in your codebase
+  if (typeof redirectIfAuthenticated === 'function') redirectIfAuthenticated();
   setupFormValidation(type);
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    clearStatusMessage(status);
+    if (typeof clearStatusMessage === 'function') clearStatusMessage(status);
 
     const submitButton = form.querySelector('button[type="submit"]');
     let payload;
 
-    if (type === 'login') {
+    if (isLoginMode) {
       const email = document.getElementById('loginEmail')?.value.trim();
       const password = document.getElementById('loginPassword')?.value;
 
-      if (!email || !password || !validateEmail(email) || !validatePassword(password).isValid) {
-        setStatusMessage(status, 'Please enter a valid email and password matching requirements');
+      if (!email || !password || !validateEmail(email) || !validatePassword(password, true).isValid) {
+        if (typeof setStatusMessage === 'function') setStatusMessage(status, 'Please enter a valid email and password');
         return;
       }
       payload = { email, password };
@@ -623,8 +644,8 @@ function attachAuthListeners(type) {
       const email = document.getElementById('signupEmail')?.value.trim();
       const password = document.getElementById('signupPassword')?.value;
 
-      if (!name || name.length < 2 || !email || !password || !validateEmail(email) || !validatePassword(password).isValid) {
-        setStatusMessage(status, 'Please fill in all fields correctly matching requirements');
+      if (!name || name.length < 2 || !email || !password || !validateEmail(email) || !validatePassword(password, false).isValid) {
+        if (typeof setStatusMessage === 'function') setStatusMessage(status, 'Please fill in all fields correctly matching requirements');
         return;
       }
       payload = { name, email, password };
@@ -632,21 +653,32 @@ function attachAuthListeners(type) {
 
     if (submitButton) {
       submitButton.disabled = true;
-      submitButton.textContent = type === 'login' ? 'Signing in…' : 'Creating account…';
+      submitButton.textContent = isLoginMode ? 'Signing in…' : 'Creating account…';
     }
 
     try {
-      await (type === 'login' ? loginUser(payload) : signupUser(payload));
-      showNotification(type === 'login' ? 'Welcome back! Redirecting…' : 'Account created successfully. Redirecting…');
+      // API call hooks check
+      if (isLoginMode && typeof loginUser === 'function') {
+        await loginUser(payload);
+      } else if (!isLoginMode && typeof signupUser === 'function') {
+        await signupUser(payload);
+      }
+
+      if (typeof showNotification === 'function') {
+        showNotification(isLoginMode ? 'Welcome back! Redirecting…' : 'Account created successfully. Redirecting…');
+      }
+
       setTimeout(() => {
         window.location.href = 'dashboard.html';
       }, 1000);
     } catch (error) {
-      setStatusMessage(status, error.message || 'Authentication failed. Please try again.');
+      if (typeof setStatusMessage === 'function') {
+        setStatusMessage(status, error.message || 'Authentication failed. Please try again.');
+      }
     } finally {
       if (submitButton) {
         submitButton.disabled = false;
-        submitButton.textContent = type === 'login' ? 'Log In' : 'Create Account';
+        submitButton.textContent = isLoginMode ? 'Log In' : 'Create Account';
       }
     }
   });
@@ -855,7 +887,7 @@ function renderServiceRows(services) {
       ? (service.image.startsWith('http') ? service.image : `${API_BASE_URL}/uploads/${service.image}`)
       : 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=120&q=80';
     const serviceId = service._id || service.id;
-    const title = service.title || service.name || 'Untitled';
+    const title = service.title || service.name;
     row.innerHTML = `
       <td>
         <div class="name-cell" style="display: flex; align-items: center; gap: 0.85rem;">
@@ -867,8 +899,8 @@ function renderServiceRows(services) {
       <td><strong style="color: var(--primary);">${service.price || '-'}</strong></td>
       <td><span style="color: var(--text); font-weight: 500;">${service.location || '-'}</span></td>
       <td><span class="status-pill ${service.status === 'Active' ? 'status-active' : service.status === 'Paused' ? 'status-paused' : 'status-draft'}">${service.status || 'Draft'}</span></td>
-      <td>${service.createdAt || service.updatedAt || '-'}</td>
-      <td class="created-by-col">${service.createdBy?.name || service.createdBy?.email || 'Unknown'}</td>
+      ${(service.createdAt || service.updatedAt)}
+      <td class="created-by-col">${service.createdBy?.name || service.createdBy?.email}</td>
       <td class="table-actions">
         <button class="btn btn-secondary action-btn" type="button" onclick="editProperty('${serviceId}')">Edit</button>
         <button class="btn btn-tertiary action-btn" type="button" onclick="removeProperty('${serviceId}')">Delete</button>
