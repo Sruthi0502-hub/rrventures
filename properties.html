@@ -1,23 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RRventures Admin | Customization</title>
+  <title>RRventures Admin | Properties</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/lucide.min.js"></script>
 </head>
-<body data-page="customization">
+
+<body data-page="properties">
   <a href="#main-content" class="skip-link">Skip to main content</a>
   <div class="app-shell" role="application">
     <aside class="sidebar" id="sidebar" aria-label="Navigation" role="navigation">
       <a href="dashboard.html" class="brand-sm">RRventures</a>
-      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="sidebar-nav">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle navigation menu" aria-expanded="false"
+        aria-controls="sidebar-nav">
         <i data-lucide="menu"></i>
       </button>
       <nav class="side-nav" id="sidebar-nav">
         <a href="dashboard.html"><i data-lucide="home"></i>Overview</a>
-        <a href="properties.html"><i data-lucide="tool"></i>Properties</a>
+        <a href="properties.html" class="active"><i data-lucide="tool"></i>Properties</a>
         <a href="services.html"><i data-lucide="concierge-bell"></i>Services</a>
 
         <a href="javascript:void(0);" class="nav-item" id="manageAdminsTab" data-tab="admins"
@@ -27,19 +30,21 @@
         </a>
 
         <a href="ads.html"><i data-lucide="megaphone"></i>Advertisements</a>
-        <a href="customization.html" class="active"><i data-lucide="sliders-horizontal"></i>Customization</a>
+        <a href="customization.html"><i data-lucide="sliders-horizontal"></i>Customization</a>
         <a href="logout.html"><i data-lucide="log-out"></i>Logout</a>
       </nav>
-      <div class="sidebar-footer">Update company identity and footer details with ease.</div>
+      <div class="sidebar-footer">Organize every property listing with clarity and speed.</div>
     </aside>
 
     <main class="main-area" id="main-content" role="main">
       <header class="topbar">
         <div class="topbar-title">
-          <h1>Content Management</h1>
-          <p>Manage company information, descriptions, contact details, and footer content across your platform.</p>
+          <h1>Properties Management</h1>
+          <p>Manage all active listings, update statuses, and add new property packages.</p>
         </div>
         <div class="topbar-actions">
+          <button id="openServiceModal" class="btn btn-primary icon-btn"><i data-lucide="plus-circle"></i><span>Add
+              Property</span></button>
           <div class="profile-pill">
             <div class="profile-ring" id="profileLetter">R</div>
             <div>
@@ -50,108 +55,84 @@
         </div>
       </header>
 
-      <div class="settings-grid">
-        <div class="settings-section">
-          <div class="section-header">
-            <div>
-              <h2>Company Information</h2>
-              <p>Core details about your organization</p>
-            </div>
-            <i data-lucide="building-2" class="section-icon"></i>
-          </div>
-          <div class="setting-card panel-card">
-            <form id="contentForm" class="form-grid">
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="companyName" class="form-label">
-                    <span>Company Name</span>
-                    <span class="required">*</span>
-                  </label>
-                  <input type="text" id="companyName" class="form-input" placeholder="RRventures" value="RRventures" required />
-                  <span class="form-hint">Your official company name</span>
-                </div>
-                <div class="form-group">
-                  <label for="companyEmail" class="form-label">
-                    <span>Company Email</span>
-                    <span class="required">*</span>
-                  </label>
-                  <input type="email" id="companyEmail" class="form-input" placeholder="info@rrventures.com" value="info@rrventures.com" required />
-                  <span class="form-hint">Main contact email address</span>
-                </div>
-              </div>
-            </form>
-          </div>
+      <div class="controls-row controls-grid">
+        <div class="search-group">
+          <label class="input-label" for="serviceSearch">Search properties</label>
+          <input id="serviceSearch" class="filter-input" type="search" placeholder="Search by title or description" />
         </div>
-
-        <div class="settings-section">
-          <div class="section-header">
-            <div>
-              <h2>Website Content</h2>
-              <p>Descriptions and messaging</p>
-            </div>
-            <i data-lucide="globe" class="section-icon"></i>
-          </div>
-          <div class="setting-card panel-card">
-            <div class="form-group">
-              <label for="companyDescription" class="form-label">
-                <span>Website Description</span>
-                <span class="form-counter"><span id="descriptionCount">0</span>/160</span>
-              </label>
-              <textarea id="companyDescription" class="form-textarea" placeholder="Describe your company in one or two sentences." maxlength="160">A premium marketing and service platform for modern businesses.</textarea>
-              <span class="form-hint">Used for SEO and platform descriptions (max 160 characters)</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="settings-section">
-          <div class="section-header">
-            <div>
-              <h2>Contact Information</h2>
-              <p>Ways customers can reach you</p>
-            </div>
-            <i data-lucide="phone" class="section-icon"></i>
-          </div>
-          <div class="setting-card panel-card">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="contactPhone" class="form-label">Phone Number</label>
-                <input type="tel" id="contactPhone" class="form-input" placeholder="+1 (555) 123-4567" value="+1 (555) 123-4567" />
-                <span class="form-hint">Primary contact number</span>
-              </div>
-              <div class="form-group">
-                <label for="contactAddress" class="form-label">Address</label>
-                <input type="text" id="contactAddress" class="form-input" placeholder="123 Business St, City, State 12345" value="123 Business St, New York, NY 10001" />
-                <span class="form-hint">Physical office location</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="settings-section">
-          <div class="section-header">
-            <div>
-              <h2>Footer Settings</h2>
-              <p>Legal and organizational footer content</p>
-            </div>
-            <i data-lucide="file-text" class="section-icon"></i>
-          </div>
-          <div class="setting-card panel-card">
-            <div class="form-group">
-              <label for="footerText" class="form-label">Footer Text</label>
-              <input type="text" id="footerText" class="form-input" placeholder="© 2026 RRventures. All rights reserved." value="© 2026 RRventures. All rights reserved." />
-              <span class="form-hint">Displayed at the bottom of all pages</span>
-            </div>
-          </div>
+        <div class="search-group">
+          <label class="input-label" for="statusFilter">Filter by status</label>
+          <select id="statusFilter" class="filter-input">
+            <option value="All">All statuses</option>
+            <option value="Active">Active</option>
+            <option value="Paused">Paused</option>
+            <option value="Draft">Draft</option>
+          </select>
         </div>
       </div>
 
-      <div class="form-actions">
-        <button type="button" id="resetBtn" class="btn btn-secondary"><i data-lucide="undo-2"></i>Reset</button>
-        <button type="submit" id="saveBtn" class="btn btn-primary"><i data-lucide="save"></i>Save Changes</button>
+      <div class="table-card">
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Property Title</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Date Created</th>
+                <th>Admin</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="serviceRows"></tbody>
+          </table>
+        </div>
       </div>
-
-      <div id="notification" class="notification"></div>
     </main>
+  </div>
+
+  <div id="serviceModal" class="modal-backdrop">
+    <div class="modal-window">
+      <h3 id="serviceModalTitle">Add new property</h3>
+      <form id="newServiceForm" class="form-grid">
+        <input type="hidden" id="serviceId" value="" />
+        <label>
+          Property Title
+          <input type="text" id="serviceName" placeholder="3-bedroom apartment" required />
+        </label>
+        <label>
+          Description
+          <textarea id="serviceDescription" placeholder="Describe the offering in one or two sentences."
+            required></textarea>
+        </label>
+        <label>
+          Price
+          <input type="number" id="servicePrice" placeholder="1500" min="0" step="0.01" required />
+        </label>
+        <label>
+          Location
+          <input type="text" id="serviceLocation" placeholder="City, Address or 'Remote'" required />
+        </label>
+        <label>
+          Image Upload
+          <input type="file" id="serviceImage" accept="image/*" required />
+        </label>
+        <label>
+          Status
+          <select id="serviceStatus">
+            <option>Active</option>
+            <option>Paused</option>
+            <option>Draft</option>
+          </select>
+        </label>
+        <div class="modal-footer">
+          <button type="button" id="closeServiceModal" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Property</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Create Admin Modal (copied from dashboard.html) -->
@@ -213,7 +194,7 @@
   <script src="scripts.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      if (window.lucide) lucide.replace({ width: 20, height: 20 });
+      if (window.lucide) lucide.replace({ width: 18, height: 18 });
       const sidebarToggle = document.getElementById('sidebarToggle');
       const sidebar = document.getElementById('sidebar');
       sidebarToggle?.addEventListener('click', () => {
@@ -223,7 +204,7 @@
         document.body.classList.toggle('sidebar-open', isOpen);
       });
       document.addEventListener('click', (e) => {
-        if (sidebar && !sidebar.contains(e.target) && sidebarToggle && !sidebarToggle.contains(e.target)) {
+        if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
           sidebar.classList.remove('mobile-open');
           sidebarToggle.setAttribute('aria-expanded', 'false');
           document.body.classList.remove('sidebar-open');
@@ -244,4 +225,5 @@
     });
   </script>
 </body>
+
 </html>

@@ -1222,7 +1222,7 @@ async function initPage() {
       initDashboardPage();
       initAdminManagement();
     }
-    else if (page === 'services') initServicesPage();
+    else if (page === 'properties') initServicesPage();
     else if (page === 'ads') initAdsPage();
     else if (page === 'customization') initCustomizationPage();
   }

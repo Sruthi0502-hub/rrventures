@@ -1,15 +1,249 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RRventures Admin | Services</title>
-  <link rel="stylesheet" href="styles.css" />
+  
+  <!-- Bootstrap 5 CSS CDN (needed for modal structure & transitions) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/lucide.min.js"></script>
-</head>
 
-<body data-page="services">
+  <style>
+    /* Styling overrides for Bootstrap to seamlessly merge with the custom dark theme */
+    body {
+      background: var(--bg) !important;
+      color: var(--text) !important;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    
+    .table-container-card {
+      background: var(--surface) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.9rem;
+    }
+    
+    .custom-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: var(--surface) !important;
+      color: var(--text) !important;
+    }
+    
+    .custom-table thead th {
+      background: var(--surface-strong) !important;
+      color: var(--muted) !important;
+      border-bottom: 1px solid var(--border) !important;
+      padding: 1.15rem 1.25rem !important;
+      font-family: inherit !important;
+      font-weight: 700 !important;
+      font-size: 0.95rem !important;
+      text-transform: none !important;
+      letter-spacing: normal !important;
+    }
+    
+    .custom-table tbody tr {
+      border-bottom: 1px solid var(--border) !important;
+      background: transparent !important;
+    }
+    
+    .custom-table tbody tr:hover {
+      background: rgba(14, 165, 164, 0.08) !important;
+    }
+    
+    .custom-table tbody td {
+      padding: 1.15rem 1.25rem !important;
+      color: var(--text) !important;
+      border-bottom: 1px solid var(--border) !important;
+      background: transparent !important;
+    }
+    
+    /* Bootstrap Modal dark theme overrides */
+    .modal-content {
+      background-color: var(--surface) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 28px !important;
+      color: var(--text) !important;
+      box-shadow: var(--shadow) !important;
+    }
+    
+    .modal-header {
+      border-bottom: 1px solid var(--border) !important;
+      padding: 1.5rem 2rem !important;
+    }
+    
+    .modal-body {
+      padding: 2rem !important;
+    }
+    
+    .modal-footer {
+      background-color: var(--surface-soft) !important;
+      border-top: 1px solid var(--border) !important;
+      padding: 1.25rem 2rem !important;
+      border-bottom-left-radius: 28px !important;
+      border-bottom-right-radius: 28px !important;
+    }
+    
+    .modal-title {
+      font-weight: 700;
+      color: var(--text) !important;
+    }
+    
+    /* Form controls in Modal */
+    .modal-body .form-label {
+      color: var(--text) !important;
+      font-weight: 700 !important;
+      font-size: 0.94rem !important;
+      margin-bottom: 0.5rem;
+    }
+    
+    .modal-body .form-control,
+    .modal-body .form-select {
+      background-color: var(--surface-soft) !important;
+      border: 1.5px solid var(--border) !important;
+      color: var(--text) !important;
+      border-radius: 16px !important;
+      padding: 0.95rem 1rem !important;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .modal-body .form-control:focus,
+    .modal-body .form-select:focus {
+      outline: none !important;
+      border-color: rgba(14, 165, 164, 0.8) !important;
+      box-shadow: 0 0 0 4px rgba(14, 165, 164, 0.15) !important;
+    }
+    
+    .modal-body .form-control::placeholder {
+      color: var(--muted) !important;
+    }
+    
+    .modal-body .form-text {
+      color: var(--muted) !important;
+      font-size: 0.84rem !important;
+    }
+    
+    .modal-body .invalid-feedback {
+      color: var(--danger) !important;
+    }
+    
+    /* Close button in modal */
+    .btn-close {
+      filter: invert(1) grayscale(1) brightness(2) !important;
+      opacity: 0.8;
+    }
+    
+    .btn-close:hover {
+      opacity: 1;
+    }
+    
+    /* Fix buttons and status badges */
+    .btn-orange {
+      background: linear-gradient(135deg, var(--primary), var(--accent)) !important;
+      border: none !important;
+      color: #fff !important;
+      border-radius: 16px !important;
+      font-weight: 600 !important;
+      padding: 0.85rem 1.3rem !important;
+      box-shadow: 0 18px 45px rgba(14, 165, 164, 0.18) !important;
+      transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    }
+    
+    .btn-orange:hover {
+      transform: translateY(-1.5px) !important;
+      box-shadow: 0 24px 55px rgba(14, 165, 164, 0.25) !important;
+      background: linear-gradient(135deg, var(--primary-hover), var(--accent)) !important;
+    }
+    
+    .btn-secondary {
+      background: var(--surface-soft) !important;
+      color: var(--text) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 16px !important;
+      font-weight: 600 !important;
+      padding: 0.85rem 1.3rem !important;
+    }
+    
+    .btn-secondary:hover {
+      background: var(--surface-strong) !important;
+      transform: translateY(-1px) !important;
+    }
+    
+    .btn-action-edit {
+      color: var(--text) !important;
+      background: var(--surface-soft) !important;
+      border: 1px solid var(--border) !important;
+    }
+    
+    .btn-action-edit:hover {
+      background: var(--primary) !important;
+      color: white !important;
+      border-color: var(--primary) !important;
+    }
+    
+    .btn-action-delete {
+      color: var(--danger) !important;
+      background: rgba(239, 68, 68, 0.08) !important;
+      border: 1px solid rgba(239, 68, 68, 0.2) !important;
+    }
+    
+    .btn-action-delete:hover {
+      background: var(--danger) !important;
+      color: white !important;
+      border-color: var(--danger) !important;
+    }
+    
+    .admin-badge {
+      font-family: inherit !important;
+      font-weight: 700 !important;
+      font-size: 11px !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.05em !important;
+      padding: 6px 10px !important;
+      border-radius: 999px !important;
+      background-color: var(--surface-soft) !important;
+      color: var(--primary) !important;
+      display: inline-block !important;
+      border: 1px solid var(--border) !important;
+    }
+    
+    .service-thumbnail-container {
+      width: 72px;
+      height: 48px;
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: var(--surface-soft);
+      border: 1px solid var(--border);
+    }
+    
+    .service-thumbnail {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .table-desc-cell {
+      max-width: 320px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--muted) !important;
+    }
+    
+    .text-steel {
+      color: var(--text) !important;
+    }
+  </style>
+</head>
+<body data-page="services-list">
   <a href="#main-content" class="skip-link">Skip to main content</a>
   <div class="app-shell" role="application">
     <aside class="sidebar" id="sidebar" aria-label="Navigation" role="navigation">
@@ -20,23 +254,31 @@
       </button>
       <nav class="side-nav" id="sidebar-nav">
         <a href="dashboard.html"><i data-lucide="home"></i>Overview</a>
-        <a href="services.html" class="active"><i data-lucide="tool"></i>Properties</a>
+        <a href="properties.html"><i data-lucide="tool"></i>Properties</a>
+        <a href="services.html" class="active"><i data-lucide="concierge-bell"></i>Services</a>
+
+        <a href="javascript:void(0);" class="nav-item" id="manageAdminsTab" data-tab="admins"
+          onclick="const m = document.getElementById('adminModal'); if(m){ m.style.setProperty('display', 'flex', 'important'); m.classList.add('active'); }">
+          <i data-lucide="users"></i>
+          <span>Create Admins</span>
+        </a>
+
         <a href="ads.html"><i data-lucide="megaphone"></i>Advertisements</a>
         <a href="customization.html"><i data-lucide="sliders-horizontal"></i>Customization</a>
         <a href="logout.html"><i data-lucide="log-out"></i>Logout</a>
       </nav>
-      <div class="sidebar-footer">Organize every property listing with clarity and speed.</div>
+      <div class="sidebar-footer">Premium admin experience for modern teams.</div>
     </aside>
 
     <main class="main-area" id="main-content" role="main">
       <header class="topbar">
         <div class="topbar-title">
-          <h1>Properties Management</h1>
-          <p>Manage all active listings, update statuses, and add new property packages.</p>
+          <h1 class="font-display">Services Management</h1>
+          <p>Manage services offered on the public website catalog.</p>
         </div>
         <div class="topbar-actions">
-          <button id="openServiceModal" class="btn btn-primary icon-btn"><i data-lucide="plus-circle"></i><span>Add
-              Property</span></button>
+          <button class="btn btn-secondary icon-btn" id="btnSignOut" type="button"><i
+              data-lucide="log-out"></i><span>Logout</span></button>
           <div class="profile-pill">
             <div class="profile-ring" id="profileLetter">R</div>
             <div>
@@ -47,107 +289,203 @@
         </div>
       </header>
 
-      <div class="controls-row controls-grid">
-        <div class="search-group">
-          <label class="input-label" for="serviceSearch">Search properties</label>
-          <input id="serviceSearch" class="filter-input" type="search" placeholder="Search by title or description" />
-        </div>
-        <div class="search-group">
-          <label class="input-label" for="statusFilter">Filter by status</label>
-          <select id="statusFilter" class="filter-input">
-            <option value="All">All statuses</option>
-            <option value="Active">Active</option>
-            <option value="Paused">Paused</option>
-            <option value="Draft">Draft</option>
-          </select>
-        </div>
-      </div>
+      <!-- Alert Container for success/error messages -->
+      <div id="alertContainer"></div>
 
-      <div class="table-card">
-        <div class="table-wrapper">
-          <table>
+      <!-- Services Table Card -->
+      <div class="table-container-card">
+        <div class="panel-header">
+          <h2 class="font-display text-steel mb-0">Active Services</h2>
+          <button class="btn btn-orange icon-btn font-display" id="btnAddService">
+            <i data-lucide="plus-circle"></i>
+            <span>Add New Service</span>
+          </button>
+        </div>
+        <div class="table-responsive mt-3">
+          <table class="custom-table" id="servicesTable">
             <thead>
               <tr>
-                <th>Property Title</th>
-                <th>Description</th>
-                <th>Price</th>
-                <th>Location</th>
-                <th>Status</th>
-                <th>Date Created</th>
-                <th>Admin</th>
-                <th>Actions</th>
+                <th scope="col" class="ps-4">Image</th>
+                <th scope="col">Title</th>
+                <th scope="col">Category</th>
+                <th scope="col">Description</th>
+                <th scope="col" class="text-end pe-4">Actions</th>
               </tr>
             </thead>
-            <tbody id="serviceRows"></tbody>
+            <tbody id="servicesTableBody">
+              <!-- Services list loaded dynamically via scripts.js -->
+              <tr>
+                <td colspan="5" class="text-center py-5">
+                  <div class="spinner-border text-orange" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <p class="text-muted mt-2 mb-0">Fetching services catalog...</p>
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>
+
     </main>
   </div>
 
-  <div id="serviceModal" class="modal-backdrop">
-    <div class="modal-window">
-      <h3 id="serviceModalTitle">Add new property</h3>
-      <form id="newServiceForm" class="form-grid">
-        <input type="hidden" id="serviceId" value="" />
-        <label>
-          Property Title
-          <input type="text" id="serviceName" placeholder="3-bedroom apartment" required />
-        </label>
-        <label>
-          Description
-          <textarea id="serviceDescription" placeholder="Describe the offering in one or two sentences."
-            required></textarea>
-        </label>
-        <label>
-          Price
-          <input type="number" id="servicePrice" placeholder="1500" min="0" step="0.01" required />
-        </label>
-        <label>
-          Location
-          <input type="text" id="serviceLocation" placeholder="City, Address or 'Remote'" required />
-        </label>
-        <label>
-          Image Upload
-          <input type="file" id="serviceImage" accept="image/*" required />
-        </label>
-        <label>
-          Status
-          <select id="serviceStatus">
-            <option>Active</option>
-            <option>Paused</option>
-            <option>Draft</option>
-          </select>
-        </label>
-        <div class="modal-footer">
-          <button type="button" id="closeServiceModal" class="btn btn-secondary">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Property</button>
+  <!-- Service Create/Edit Modal -->
+  <div class="modal fade" id="serviceModal" tabindex="-1" aria-labelledby="serviceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="serviceModalLabel">Add New Service</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
+        <form id="serviceForm" enctype="multipart/form-data" novalidate>
+          <div class="modal-body">
+            <!-- Hidden input to store editing ID -->
+            <input type="hidden" id="serviceId">
+            
+            <div class="row g-3">
+              <!-- Title -->
+              <div class="col-md-6">
+                <label for="serviceTitle" class="form-label">Service Title *</label>
+                <input type="text" class="form-control" id="serviceTitle" placeholder="e.g. Tanker Body Fabrication" required>
+                <div class="invalid-feedback">Please enter a service title.</div>
+              </div>
+              
+              <!-- Category -->
+              <div class="col-md-6">
+                <label for="serviceCategory" class="form-label">Category *</label>
+                <input type="text" class="form-control" id="serviceCategory" placeholder="e.g. Tanker Making" required>
+                <div class="invalid-feedback">Please enter a category.</div>
+              </div>
+              
+              <!-- Description -->
+              <div class="col-12">
+                <label for="serviceDescription" class="form-label">Description *</label>
+                <textarea class="form-control" id="serviceDescription" rows="4" placeholder="Detailed service description and specifications..." required></textarea>
+                <div class="invalid-feedback">Please enter a description.</div>
+              </div>
+
+              <!-- Image file upload -->
+              <div class="col-12">
+                <label for="serviceImage" class="form-label" id="labelServiceImage">Service Image File *</label>
+                <input type="file" class="form-control" id="serviceImage" accept="image/*" required>
+                <div class="form-text" id="helperServiceImage">Upload a high-quality JPG/PNG image file.</div>
+                <div class="invalid-feedback" id="feedbackServiceImage">Please select an image file.</div>
+                
+                <!-- Image Preview (hidden initially) -->
+                <div id="serviceImagePreviewContainer" class="mt-3 d-none">
+                  <span class="d-block mb-2 text-muted small" style="font-weight: 600;">Current / Preview Image:</span>
+                  <img src="" id="serviceImagePreview" alt="Preview" class="img-thumbnail" style="max-height: 150px; background-color: var(--surface-soft); border-color: var(--border);">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-orange" id="btnSubmitService">Create Service</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Admin Modal (copied from dashboard.html) -->
+  <div id="adminModal" class="modal"
+    style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(10, 17, 26, 0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; transition: all 0.3s ease;">
+
+    <div class="auth-card"
+      style="background: #111c2a; border: 1px solid #233549; max-width: 480px; width: 90%; padding: 2.5rem; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: scale(0.95); transition: transform 0.3s ease;">
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h3 style="margin: 0; color: #fff; font-size: 1.4rem; font-weight: 600; letter-spacing: 0.5px;">Create New Admin
+          Account</h3>
+        <button id="closeAdminModal" type="button"
+          onclick="const m = document.getElementById('adminModal'); if(m){ m.style.display='none'; m.classList.remove('active'); }"
+          style="background: none; border: none; color: #a0aec0; font-size: 2.2rem; cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s;"
+          onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a0aec0'">&times;</button>
+      </div>
+
+      <div id="adminStatus" class="status-message"
+        style="display:none; padding: 0.75rem; border-radius: 8px; margin-bottom: 1.25rem; font-size: 0.9rem; font-weight: 500; text-align: center; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);">
+      </div>
+
+      <form id="newAdminForm" autocomplete="off">
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label
+            style="display: block; margin-bottom: 0.5rem; color: #a0aec0; font-size: 0.9rem; font-weight: 500;">Full
+            Name</label>
+          <input type="text" id="adminName" placeholder="e.g. Ali Mawiya" required
+            style="width: 100%; padding: 0.85rem; border-radius: 10px; border: 1px solid #233549; background: rgba(255,255,255,0.02); color: #fff; outline: none; font-size: 0.95rem; transition: border-color 0.2s;"
+            onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#233549'" />
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label
+            style="display: block; margin-bottom: 0.5rem; color: #a0aec0; font-size: 0.9rem; font-weight: 500;">Email
+            Address</label>
+          <input type="email" id="adminEmail" placeholder="admin@rrventures.com" required
+            style="width: 100%; padding: 0.85rem; border-radius: 10px; border: 1px solid #233549; background: rgba(255,255,255,0.02); color: #fff; outline: none; font-size: 0.95rem; transition: border-color 0.2s;"
+            onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#233549'" />
+        </div>
+
+        <div class="form-group" style="margin-bottom: 2rem;">
+          <label
+            style="display: block; margin-bottom: 0.5rem; color: #a0aec0; font-size: 0.9rem; font-weight: 500;">Password</label>
+          <input type="password" id="adminPassword" placeholder="••••••••" required
+            style="width: 100%; padding: 0.85rem; border-radius: 10px; border: 1px solid #233549; background: rgba(255,255,255,0.02); color: #fff; outline: none; font-size: 0.95rem; transition: border-color 0.2s;"
+            onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#233549'" />
+        </div>
+
+        <button type="submit" class="btn btn-primary"
+          style="width: 100%; padding: 0.9rem; font-weight: 600; font-size: 1rem; border-radius: 10px; cursor: pointer; background: #3b82f6; color: #fff; border: none; transition: opacity 0.2s;"
+          onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+          Create Admin Account
+        </button>
       </form>
     </div>
   </div>
 
+  <!-- Bootstrap 5 JS Bundle CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Admin Controller JS -->
   <script src="scripts.js"></script>
+  
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      if (window.lucide) lucide.replace({ width: 18, height: 18 });
+      if (window.lucide) lucide.replace({ width: 20, height: 20 });
+
       const sidebarToggle = document.getElementById('sidebarToggle');
       const sidebar = document.getElementById('sidebar');
+
       sidebarToggle?.addEventListener('click', () => {
         sidebar.classList.toggle('mobile-open');
         const isOpen = sidebar.classList.contains('mobile-open');
         sidebarToggle.setAttribute('aria-expanded', isOpen);
         document.body.classList.toggle('sidebar-open', isOpen);
       });
+
       document.addEventListener('click', (e) => {
-        if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+        if (sidebar && !sidebar.contains(e.target) && sidebarToggle && !sidebarToggle.contains(e.target)) {
           sidebar.classList.remove('mobile-open');
           sidebarToggle.setAttribute('aria-expanded', 'false');
           document.body.classList.remove('sidebar-open');
         }
       });
+
+      // Background touch detection to dismiss admin form modal dynamically
+      const targetModal = document.getElementById('adminModal');
+      window.addEventListener('click', (e) => {
+        if (e.target === targetModal) {
+          targetModal.style.display = 'none';
+          targetModal.classList.remove('active');
+        }
+      });
+
+      // Initialize Admin Management
+      if (typeof initAdminManagement === 'function') {
+        initAdminManagement();
+      }
     });
   </script>
 </body>
-
 </html>
