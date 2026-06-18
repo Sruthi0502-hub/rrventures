@@ -1,27 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RRventures Admin | Services</title>
-  
-  <!-- Bootstrap 5 CSS CDN (needed for modal structure & transitions) -->
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  
-  <!-- Custom Styles -->
+
   <link rel="stylesheet" href="styles.css">
-  
-  <!-- Lucide Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/lucide.min.js"></script>
 
   <style>
-    /* Styling overrides for Bootstrap to seamlessly merge with the custom dark theme */
     body {
       background: var(--bg) !important;
       color: var(--text) !important;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      /* 🎯 Font ko badalkar premium geometric sans-serif banaya */
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      letter-spacing: -0.015em;
     }
-    
+
     .table-container-card {
       background: var(--surface) !important;
       border: 1px solid var(--border) !important;
@@ -29,7 +34,7 @@
       box-shadow: var(--shadow);
       padding: 1.9rem;
     }
-    
+
     .custom-table {
       width: 100%;
       border-collapse: separate;
@@ -37,35 +42,40 @@
       background: var(--surface) !important;
       color: var(--text) !important;
     }
-    
+
     .custom-table thead th {
       background: var(--surface-strong) !important;
       color: var(--muted) !important;
       border-bottom: 1px solid var(--border) !important;
       padding: 1.15rem 1.25rem !important;
-      font-family: inherit !important;
+      /* 🎯 Header fonts ko zyada neat aur premium styling di */
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
       font-weight: 700 !important;
-      font-size: 0.95rem !important;
-      text-transform: none !important;
-      letter-spacing: normal !important;
+      font-size: 0.88rem !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.05em !important;
     }
-    
+
     .custom-table tbody tr {
       border-bottom: 1px solid var(--border) !important;
       background: transparent !important;
     }
-    
+
     .custom-table tbody tr:hover {
       background: rgba(14, 165, 164, 0.08) !important;
     }
-    
+
     .custom-table tbody td {
       padding: 1.15rem 1.25rem !important;
       color: var(--text) !important;
       border-bottom: 1px solid var(--border) !important;
       background: transparent !important;
+      /* 🎯 Text readability badhane ke liye typography controls code */
+      font-size: 0.92rem !important;
+      font-weight: 500 !important;
+      /* Thoda dense font weight dark mode readability ke liye */
     }
-    
+
     /* Bootstrap Modal dark theme overrides */
     .modal-content {
       background-color: var(--surface) !important;
@@ -74,16 +84,16 @@
       color: var(--text) !important;
       box-shadow: var(--shadow) !important;
     }
-    
+
     .modal-header {
       border-bottom: 1px solid var(--border) !important;
       padding: 1.5rem 2rem !important;
     }
-    
+
     .modal-body {
       padding: 2rem !important;
     }
-    
+
     .modal-footer {
       background-color: var(--surface-soft) !important;
       border-top: 1px solid var(--border) !important;
@@ -91,20 +101,24 @@
       border-bottom-left-radius: 28px !important;
       border-bottom-right-radius: 28px !important;
     }
-    
+
     .modal-title {
-      font-weight: 700;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      font-weight: 700 !important;
       color: var(--text) !important;
+      letter-spacing: -0.02em !important;
     }
-    
+
     /* Form controls in Modal */
     .modal-body .form-label {
       color: var(--text) !important;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
       font-weight: 700 !important;
-      font-size: 0.94rem !important;
+      font-size: 0.9rem !important;
       margin-bottom: 0.5rem;
+      letter-spacing: -0.01em;
     }
-    
+
     .modal-body .form-control,
     .modal-body .form-select {
       background-color: var(--surface-soft) !important;
@@ -112,97 +126,112 @@
       color: var(--text) !important;
       border-radius: 16px !important;
       padding: 0.95rem 1rem !important;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      font-size: 0.93rem !important;
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
-    
+
     .modal-body .form-control:focus,
     .modal-body .form-select:focus {
       outline: none !important;
       border-color: rgba(14, 165, 164, 0.8) !important;
       box-shadow: 0 0 0 4px rgba(14, 165, 164, 0.15) !important;
     }
-    
+
     .modal-body .form-control::placeholder {
       color: var(--muted) !important;
+      font-size: 0.88rem !important;
     }
-    
+
     .modal-body .form-text {
       color: var(--muted) !important;
-      font-size: 0.84rem !important;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      font-size: 0.82rem !important;
     }
-    
+
     .modal-body .invalid-feedback {
       color: var(--danger) !important;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      font-size: 0.82rem !important;
     }
-    
+
     /* Close button in modal */
     .btn-close {
       filter: invert(1) grayscale(1) brightness(2) !important;
       opacity: 0.8;
     }
-    
+
     .btn-close:hover {
       opacity: 1;
     }
-    
+
     /* Fix buttons and status badges */
     .btn-orange {
       background: linear-gradient(135deg, var(--primary), var(--accent)) !important;
       border: none !important;
       color: #fff !important;
       border-radius: 16px !important;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
       font-weight: 600 !important;
       padding: 0.85rem 1.3rem !important;
       box-shadow: 0 18px 45px rgba(14, 165, 164, 0.18) !important;
       transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+      letter-spacing: -0.01em;
     }
-    
+
     .btn-orange:hover {
       transform: translateY(-1.5px) !important;
       box-shadow: 0 24px 55px rgba(14, 165, 164, 0.25) !important;
       background: linear-gradient(135deg, var(--primary-hover), var(--accent)) !important;
     }
-    
+
     .btn-secondary {
       background: var(--surface-soft) !important;
       color: var(--text) !important;
       border: 1px solid var(--border) !important;
       border-radius: 16px !important;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
       font-weight: 600 !important;
       padding: 0.85rem 1.3rem !important;
     }
-    
+
     .btn-secondary:hover {
       background: var(--surface-strong) !important;
       transform: translateY(-1px) !important;
     }
-    
+
     .btn-action-edit {
       color: var(--text) !important;
       background: var(--surface-soft) !important;
       border: 1px solid var(--border) !important;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      font-weight: 600 !important;
+      font-size: 0.88rem !important;
     }
-    
+
     .btn-action-edit:hover {
       background: var(--primary) !important;
       color: white !important;
       border-color: var(--primary) !important;
     }
-    
+
     .btn-action-delete {
       color: var(--danger) !important;
       background: rgba(239, 68, 68, 0.08) !important;
       border: 1px solid rgba(239, 68, 68, 0.2) !important;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      font-weight: 600 !important;
+      font-size: 0.88rem !important;
     }
-    
+
     .btn-action-delete:hover {
       background: var(--danger) !important;
       color: white !important;
       border-color: var(--danger) !important;
     }
-    
+
     .admin-badge {
-      font-family: inherit !important;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
       font-weight: 700 !important;
       font-size: 11px !important;
       text-transform: uppercase !important;
@@ -214,7 +243,7 @@
       display: inline-block !important;
       border: 1px solid var(--border) !important;
     }
-    
+
     .service-thumbnail-container {
       width: 72px;
       height: 48px;
@@ -223,26 +252,40 @@
       background-color: var(--surface-soft);
       border: 1px solid var(--border);
     }
-    
+
     .service-thumbnail {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
-    
+
     .table-desc-cell {
       max-width: 320px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       color: var(--muted) !important;
+      font-weight: 400 !important;
     }
-    
+
+    .font-display,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    .topbar-title h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      font-weight: 800 !important;
+      letter-spacing: -0.03em !important;
+    }
+
     .text-steel {
       color: var(--text) !important;
     }
   </style>
 </head>
+
 <body data-page="services-list">
   <a href="#main-content" class="skip-link">Skip to main content</a>
   <div class="app-shell" role="application">
@@ -289,7 +332,6 @@
         </div>
       </header>
 
-      <!-- Alert Container for success/error messages -->
       <div id="alertContainer"></div>
 
       <!-- Services Table Card -->
@@ -307,15 +349,16 @@
               <tr>
                 <th scope="col" class="ps-4">Image</th>
                 <th scope="col">Title</th>
-                <th scope="col">Category</th>
-                <th scope="col">Description</th>
+                <th scope="col">Short Description</th>
+                <th scope="col">Long Description</th> <!-- Naya Column Added -->
+                <th scope="col">Features</th> <!-- Naya Column Added -->
                 <th scope="col" class="text-end pe-4">Actions</th>
               </tr>
             </thead>
             <tbody id="servicesTableBody">
-              <!-- Services list loaded dynamically via scripts.js -->
               <tr>
-                <td colspan="5" class="text-center py-5">
+                <!-- colspan ko 4 se badalkar 6 kar diya kyunki ab 6 columns hain -->
+                <td colspan="6" class="text-center py-5">
                   <div class="spinner-border text-orange" role="status">
                     <span class="visually-hidden">Loading...</span>
                   </div>
@@ -330,7 +373,6 @@
     </main>
   </div>
 
-  <!-- Service Create/Edit Modal -->
   <div class="modal fade" id="serviceModal" tabindex="-1" aria-labelledby="serviceModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content">
@@ -340,42 +382,50 @@
         </div>
         <form id="serviceForm" enctype="multipart/form-data" novalidate>
           <div class="modal-body">
-            <!-- Hidden input to store editing ID -->
             <input type="hidden" id="serviceId">
-            
+
             <div class="row g-3">
-              <!-- Title -->
-              <div class="col-md-6">
+              <div class="col-12">
                 <label for="serviceTitle" class="form-label">Service Title *</label>
-                <input type="text" class="form-control" id="serviceTitle" placeholder="e.g. Tanker Body Fabrication" required>
+                <input type="text" class="form-control" id="serviceTitle" placeholder="e.g. Tanker Body Fabrication"
+                  required>
                 <div class="invalid-feedback">Please enter a service title.</div>
               </div>
-              
-              <!-- Category -->
-              <div class="col-md-6">
-                <label for="serviceCategory" class="form-label">Category *</label>
-                <input type="text" class="form-control" id="serviceCategory" placeholder="e.g. Tanker Making" required>
-                <div class="invalid-feedback">Please enter a category.</div>
-              </div>
-              
-              <!-- Description -->
+
               <div class="col-12">
-                <label for="serviceDescription" class="form-label">Description *</label>
-                <textarea class="form-control" id="serviceDescription" rows="4" placeholder="Detailed service description and specifications..." required></textarea>
-                <div class="invalid-feedback">Please enter a description.</div>
+                <label for="serviceShortDescription" class="form-label">Short Description *</label>
+                <input type="text" class="form-control" id="serviceShortDescription"
+                  placeholder="Brief summary for catalog cards..." required>
+                <div class="invalid-feedback">Please enter a short description.</div>
               </div>
 
-              <!-- Image file upload -->
               <div class="col-12">
-                <label for="serviceImage" class="form-label" id="labelServiceImage">Service Image File *</label>
-                <input type="file" class="form-control" id="serviceImage" accept="image/*" required>
-                <div class="form-text" id="helperServiceImage">Upload a high-quality JPG/PNG image file.</div>
-                <div class="invalid-feedback" id="feedbackServiceImage">Please select an image file.</div>
-                
-                <!-- Image Preview (hidden initially) -->
+                <label for="serviceLongDescription" class="form-label">Long Description *</label>
+                <textarea class="form-control" id="serviceLongDescription" rows="4"
+                  placeholder="Detailed service description, design metrics and commercial truck specifications..."
+                  required></textarea>
+                <div class="invalid-feedback">Please enter a long description.</div>
+              </div>
+
+              <div class="col-12">
+                <label for="serviceFeatures" class="form-label">Features *</label>
+                <input type="text" class="form-control" id="serviceFeatures"
+                  placeholder="e.g. Heavy-duty MS sheets, Anti-corrosive paint, Custom dimensions" required>
+                <div class="form-text">Separate multiple points using commas (,). Your service logic handles conversion
+                  automatically.</div>
+                <div class="invalid-feedback">Please enter at least one feature.</div>
+              </div>
+
+              <div class="col-12">
+                <label for="serviceImage" class="form-label" id="labelServiceImage">Service Images *</label>
+                <input type="file" class="form-control" id="serviceImage" name="images" accept="image/*" multiple
+                  required>
+                <div class="form-text" id="helperServiceImage">Upload one or multiple high-quality JPG/PNG files.</div>
+                <div class="invalid-feedback" id="feedbackServiceImage">Please select at least one image file.</div>
+
                 <div id="serviceImagePreviewContainer" class="mt-3 d-none">
-                  <span class="d-block mb-2 text-muted small" style="font-weight: 600;">Current / Preview Image:</span>
-                  <img src="" id="serviceImagePreview" alt="Preview" class="img-thumbnail" style="max-height: 150px; background-color: var(--surface-soft); border-color: var(--border);">
+                  <span class="d-block mb-2 text-muted small" style="font-weight: 600;">Selected Previews:</span>
+                  <div id="previewImagesWrapper" class="d-flex flex-wrap gap-2"></div>
                 </div>
               </div>
             </div>
@@ -389,7 +439,6 @@
     </div>
   </div>
 
-  <!-- Create Admin Modal (copied from dashboard.html) -->
   <div id="adminModal" class="modal"
     style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(10, 17, 26, 0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; transition: all 0.3s ease;">
 
@@ -445,11 +494,9 @@
     </div>
   </div>
 
-  <!-- Bootstrap 5 JS Bundle CDN -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Admin Controller JS -->
   <script src="scripts.js"></script>
-  
+
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       if (window.lucide) lucide.replace({ width: 20, height: 20 });
@@ -472,7 +519,6 @@
         }
       });
 
-      // Background touch detection to dismiss admin form modal dynamically
       const targetModal = document.getElementById('adminModal');
       window.addEventListener('click', (e) => {
         if (e.target === targetModal) {
@@ -481,11 +527,37 @@
         }
       });
 
-      // Initialize Admin Management
+      // Multi-image file preview script
+      const serviceImageInput = document.getElementById('serviceImage');
+      const previewContainer = document.getElementById('serviceImagePreviewContainer');
+      const previewWrapper = document.getElementById('previewImagesWrapper');
+
+      serviceImageInput?.addEventListener('change', (e) => {
+        if (previewWrapper) previewWrapper.innerHTML = '';
+        const files = e.target.files;
+        if (files && files.length > 0) {
+          previewContainer?.classList.remove('d-none');
+          Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const img = document.createElement('img');
+              img.src = event.target.result;
+              img.className = 'img-thumbnail';
+              img.style.cssText = 'height: 80px; width: 110px; object-fit: cover; background-color: var(--surface-soft); border-color: var(--border);';
+              previewWrapper?.appendChild(img);
+            }
+            reader.readAsDataURL(file);
+          });
+        } else {
+          previewContainer?.classList.add('d-none');
+        }
+      });
+
       if (typeof initAdminManagement === 'function') {
         initAdminManagement();
       }
     });
   </script>
 </body>
+
 </html>

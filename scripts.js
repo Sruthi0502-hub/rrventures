@@ -1246,8 +1246,8 @@ window.addEventListener('DOMContentLoaded', initPage);
   // DOM Elements
   let servicesTableBody, alertContainer, serviceForm, serviceModalEl, serviceModalLabel;
   let btnSubmitService, btnAddService, btnSignOut;
-  let serviceIdInput, serviceTitleInput, serviceCategoryInput, serviceDescriptionInput;
-  let serviceImageInput, labelServiceImage, feedbackServiceImage, serviceImagePreviewContainer, serviceImagePreview;
+  let serviceIdInput, serviceTitleInput, serviceShortDescriptionInput, serviceLongDescriptionInput, serviceFeaturesInput;
+  let serviceImageInput, labelServiceImage, feedbackServiceImage, serviceImagePreviewContainer, previewImagesWrapper;
 
   document.addEventListener('DOMContentLoaded', () => {
     // Only run if we are on the services.html page
@@ -1264,13 +1264,17 @@ window.addEventListener('DOMContentLoaded', initPage);
 
     serviceIdInput = document.getElementById('serviceId');
     serviceTitleInput = document.getElementById('serviceTitle');
-    serviceCategoryInput = document.getElementById('serviceCategory');
-    serviceDescriptionInput = document.getElementById('serviceDescription');
+
+    // 🎯 Nayi Fields ki sahi IDs yahan map kar di
+    serviceShortDescriptionInput = document.getElementById('serviceShortDescription');
+    serviceLongDescriptionInput = document.getElementById('serviceLongDescription');
+    serviceFeaturesInput = document.getElementById('serviceFeatures');
+
     serviceImageInput = document.getElementById('serviceImage');
     labelServiceImage = document.getElementById('labelServiceImage');
     feedbackServiceImage = document.getElementById('feedbackServiceImage');
     serviceImagePreviewContainer = document.getElementById('serviceImagePreviewContainer');
-    serviceImagePreview = document.getElementById('serviceImagePreview');
+    previewImagesWrapper = document.getElementById('previewImagesWrapper'); // Dynamic previews wrapper
 
     serviceModalInstance = new bootstrap.Modal(serviceModalEl);
 
@@ -1294,7 +1298,6 @@ window.addEventListener('DOMContentLoaded', initPage);
         input.classList.remove('is-invalid');
       });
     });
-    serviceImageInput.addEventListener('change', handleImageFileChange);
   });
 
   async function fetchServicesListLocal() {
@@ -1320,44 +1323,49 @@ window.addEventListener('DOMContentLoaded', initPage);
   function renderTable(list) {
     if (!list || list.length === 0) {
       servicesTableBody.innerHTML = `
-        <tr>
-          <td colspan="5" class="text-center py-4 text-muted">
-            No services found. Click "Add New Service" to insert one.
-          </td>
-        </tr>`;
+      <tr>
+        <td colspan="6" class="text-center py-4 text-muted">
+          No services found. Click "Add New Service" to insert one.
+        </td>
+      </tr>`;
       return;
     }
     servicesTableBody.innerHTML = '';
     list.forEach(s => {
       const tr = document.createElement('tr');
-      const imageSrc = s.images ? `${IMAGE_BASE}${s.images}` : (s.image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80');
-      const title = s.title || s.name || 'Untitled Service';
-      const category = s.category || 'Fabrication';
-      const description = s.description || s.desc || '';
+
+      // Pehli image array se nikalna safe side ke liye
+      const firstImage = s.images && s.images.length > 0 ? s.images[0] : null;
+      const imageSrc = firstImage ? `${IMAGE_BASE}${firstImage}` : 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80';
+
+      const title = s.title || 'Untitled Service';
+      const shortDesc = s.shortDescription || '';
+      const longDesc = s.longDescription || '';
+
+      // Array ko wapas comma-separated string dikhana table ke liye
+      const featuresStr = Array.isArray(s.features) ? s.features.join(', ') : (s.features || '');
       const id = s._id || s.id;
 
+      // 🎯 Table me saare naye 6 columns render kar diye
       tr.innerHTML = `
-        <td class="ps-4">
-          <div class="service-thumbnail-container">
-            <img src="${imageSrc}" alt="${title}" class="service-thumbnail" onerror="this.src='https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80'">
-          </div>
-        </td>
-        <td class="fw-semibold text-steel font-display" style="font-size: 15px;">${title}</td>
-        <td>
-          <span class="admin-badge">${category}</span>
-        </td>
-        <td>
-          <div class="table-desc-cell">${description}</div>
-        </td>
-        <td class="text-end pe-4">
-          <button class="btn btn-action btn-action-edit me-1" onclick="openEditModal('${id}')">
-            Edit
-          </button>
-          <button class="btn btn-action btn-action-delete" onclick="handleDeleteClick('${id}')">
-            Delete
-          </button>
-        </td>
-      `;
+      <td class="ps-4">
+        <div class="service-thumbnail-container">
+          <img src="${imageSrc}" alt="${title}" class="service-thumbnail" onerror="this.src='https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80'">
+        </div>
+      </td>
+      <td class="fw-semibold text-steel font-display" style="font-size: 15px;">${title}</td>
+      <td class="table-desc-cell">${shortDesc}</td>
+      <td class="table-desc-cell">${longDesc}</td>
+      <td class="table-desc-cell">${featuresStr}</td>
+      <td class="text-end pe-4">
+        <button class="btn btn-action btn-action-edit me-1" onclick="openEditModal('${id}')">
+          Edit
+        </button>
+        <button class="btn btn-action btn-action-delete" onclick="handleDeleteClick('${id}')">
+          Delete
+        </button>
+      </td>
+    `;
       servicesTableBody.appendChild(tr);
     });
   }
@@ -1367,9 +1375,9 @@ window.addEventListener('DOMContentLoaded', initPage);
     alertEl.className = `alert alert-${type === 'danger' ? 'danger' : 'success'} alert-dismissible fade show`;
     alertEl.role = 'alert';
     alertEl.innerHTML = `
-      <span>${message}</span>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    `;
+    <span>${message}</span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  `;
     alertContainer.appendChild(alertEl);
     setTimeout(() => {
       const bsAlert = bootstrap.Alert.getInstance(alertEl);
@@ -1384,13 +1392,14 @@ window.addEventListener('DOMContentLoaded', initPage);
     serviceForm.classList.remove('was-validated');
     const invalidFields = serviceForm.querySelectorAll('.is-invalid');
     invalidFields.forEach(f => f.classList.remove('is-invalid'));
+
     serviceModalLabel.textContent = 'Add New Service';
     btnSubmitService.textContent = 'Create Service';
     serviceImageInput.setAttribute('required', 'required');
-    labelServiceImage.textContent = 'Service Image File *';
-    feedbackServiceImage.textContent = 'Please select an image file.';
+    labelServiceImage.textContent = 'Service Images *';
+    feedbackServiceImage.textContent = 'Please select at least one image file.';
     serviceImagePreviewContainer.classList.add('d-none');
-    serviceImagePreview.src = '';
+    if (previewImagesWrapper) previewImagesWrapper.innerHTML = '';
     serviceModalInstance.show();
   }
 
@@ -1408,69 +1417,80 @@ window.addEventListener('DOMContentLoaded', initPage);
       return;
     }
 
-    serviceTitleInput.value = item.title || item.name || '';
-    serviceCategoryInput.value = item.category || '';
-    serviceDescriptionInput.value = item.description || item.desc || '';
+    // 🎯 Data inputs me fill karna naye fields ke sath
+    serviceTitleInput.value = item.title || '';
+    serviceShortDescriptionInput.value = item.shortDescription || '';
+    serviceLongDescriptionInput.value = item.longDescription || '';
+    serviceFeaturesInput.value = Array.isArray(item.features) ? item.features.join(', ') : (item.features || '');
+
     serviceModalLabel.textContent = 'Edit Service';
     btnSubmitService.textContent = 'Save Changes';
     serviceImageInput.removeAttribute('required');
-    labelServiceImage.textContent = 'Change Service Image (Optional)';
-    feedbackServiceImage.textContent = 'Please choose a valid file.';
+    labelServiceImage.textContent = 'Change Service Images (Optional)';
+    feedbackServiceImage.textContent = 'Please choose valid files.';
 
-    const imageSrc = item.images ? `${IMAGE_BASE}${item.images}` : (item.image || '');
-    if (imageSrc) {
+    if (previewImagesWrapper) previewImagesWrapper.innerHTML = '';
+
+    if (item.images && item.images.length > 0) {
       serviceImagePreviewContainer.classList.remove('d-none');
-      serviceImagePreview.src = imageSrc;
+      item.images.forEach(imgName => {
+        const img = document.createElement('img');
+        img.src = `${IMAGE_BASE}${imgName}`;
+        img.className = 'img-thumbnail';
+        img.style.cssText = 'height: 80px; width: 110px; object-fit: cover;';
+        previewImagesWrapper?.appendChild(img);
+      });
     } else {
       serviceImagePreviewContainer.classList.add('d-none');
-      serviceImagePreview.src = '';
     }
     serviceModalInstance.show();
-  }
-
-  function handleImageFileChange(e) {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        serviceImagePreviewContainer.classList.remove('d-none');
-        serviceImagePreview.src = event.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
   }
 
   async function handleFormSubmit(e) {
     e.preventDefault();
     let isValid = true;
+
+    // Validation checks
     if (!serviceTitleInput.value.trim()) {
       serviceTitleInput.classList.add('is-invalid');
       isValid = false;
     }
-    if (!serviceCategoryInput.value.trim()) {
-      serviceCategoryInput.classList.add('is-invalid');
+    if (!serviceShortDescriptionInput.value.trim()) {
+      serviceShortDescriptionInput.classList.add('is-invalid');
       isValid = false;
     }
-    if (!serviceDescriptionInput.value.trim()) {
-      serviceDescriptionInput.classList.add('is-invalid');
+    if (!serviceLongDescriptionInput.value.trim()) {
+      serviceLongDescriptionInput.classList.add('is-invalid');
       isValid = false;
     }
-    if (!editMode && !serviceImageInput.files[0]) {
+    if (!serviceFeaturesInput.value.trim()) {
+      serviceFeaturesInput.classList.add('is-invalid');
+      isValid = false;
+    }
+    if (!editMode && serviceImageInput.files.length === 0) {
       serviceImageInput.classList.add('is-invalid');
       isValid = false;
     }
+
     if (!isValid) {
       serviceForm.classList.add('was-validated');
       return;
     }
 
+    // 🎯 FormData creation matching NestJS Interceptor
     const formData = new FormData();
     formData.append('title', serviceTitleInput.value.trim());
-    formData.append('category', serviceCategoryInput.value.trim());
-    formData.append('description', serviceDescriptionInput.value.trim());
+    formData.append('shortDescription', serviceShortDescriptionInput.value.trim());
+    formData.append('longDescription', serviceLongDescriptionInput.value.trim());
 
-    const file = serviceImageInput.files[0];
-    if (file) formData.append('images', file);
+    // Direct comma-separated bhej rahe hain, service handle kar legi array me!
+    formData.append('features', serviceFeaturesInput.value.trim());
+
+    // Loop through multiple dynamic images
+    const files = serviceImageInput.files;
+    for (let i = 0; i < files.length; i++) {
+      formData.append('images', files[i]); // Matches FilesInterceptor('images')
+    }
 
     const token = localStorage.getItem('token');
     const headers = { 'Authorization': token ? `Bearer ${token}` : '' };
@@ -1505,16 +1525,13 @@ window.addEventListener('DOMContentLoaded', initPage);
   }
 
   async function handleDeleteClick(id) {
-    // 1. Find the item safely
     const item = servicesList.find(s => String(s._id || s.id) === String(id));
-    const title = item ? (item.title || item.name || 'this service') : 'this service';
+    const title = item ? (item.title || 'this service') : 'this service';
 
     const confirmDelete = confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`);
     if (!confirmDelete) return;
 
     const token = localStorage.getItem('token');
-
-    // Set up headers dynamically
     const headers = {};
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
@@ -1526,14 +1543,12 @@ window.addEventListener('DOMContentLoaded', initPage);
         headers: headers
       });
 
-      // 2. Handle potentially empty responses (like 204 No Content) Safely
       let resJson = {};
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         resJson = await response.json();
       }
 
-      // 3. Throw error if response is not OK
       if (!response.ok) {
         throw new Error(resJson.message || `Deletion failed with status ${response.status}`);
       }
@@ -1541,7 +1556,7 @@ window.addEventListener('DOMContentLoaded', initPage);
       showAlert('Service deleted successfully!', 'success');
       fetchServicesListLocal();
     } catch (err) {
-      console.error('Delete error detailed logging:', err);
+      console.error('Delete error:', err);
       showAlert(`Error: ${err.message || 'Failed to delete service.'}`, 'danger');
     }
   }
