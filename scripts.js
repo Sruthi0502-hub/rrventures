@@ -1483,8 +1483,16 @@ window.addEventListener('DOMContentLoaded', initPage);
     formData.append('shortDescription', serviceShortDescriptionInput.value.trim());
     formData.append('longDescription', serviceLongDescriptionInput.value.trim());
 
-    // Direct comma-separated bhej rahe hain, service handle kar legi array me!
-    formData.append('features', serviceFeaturesInput.value.trim());
+    // 🛠️ Features क्लीनिंग: कॉमा से स्प्लिट करें, स्पेस हटाएं और खाली "" वैल्यूज को रिमूव करें
+    const featuresArray = serviceFeaturesInput.value
+      .split(',')
+      .map(f => f.trim())
+      .filter(f => f.length > 0);
+
+    // NestJS Files/Body Parsing के लिए एरे को सही से अपेंड करें
+    featuresArray.forEach(feature => {
+      formData.append('features', feature);
+    });
 
     // Loop through multiple dynamic images
     const files = serviceImageInput.files;
@@ -1509,12 +1517,32 @@ window.addEventListener('DOMContentLoaded', initPage);
         headers: headers,
         body: formData
       });
+
+      // 🛠️ पहले चेक करें कि रिस्पॉन्स सही (200-299) है या नहीं
+      if (!response.ok) {
+        let errorMsg = 'Operation failed';
+        try {
+          const errorJson = await response.json();
+          errorMsg = errorJson.message || errorMsg;
+        } catch (parseErr) {
+          // अगर रिस्पॉन्स JSON नहीं है
+          errorMsg = `Server error: ${response.status}`;
+        }
+        throw new Error(errorMsg);
+      }
+
+      // अगर रिस्पॉन्स OK है, तभी JSON डेटा रीड करें
       const resJson = await response.json();
-      if (!response.ok) throw new Error(resJson.message || 'Operation failed');
 
       showAlert(editMode ? 'Service updated successfully!' : 'Service created successfully!', 'success');
-      serviceModalInstance.hide();
-      fetchServicesListLocal();
+
+      if (typeof serviceModalInstance !== 'undefined' && serviceModalInstance.hide) {
+        serviceModalInstance.hide();
+      }
+
+      if (typeof fetchServicesListLocal === 'function') {
+        fetchServicesListLocal();
+      }
     } catch (err) {
       console.error('Save error:', err);
       showAlert(`Error: ${err.message || 'Failed to save service details.'}`, 'danger');
