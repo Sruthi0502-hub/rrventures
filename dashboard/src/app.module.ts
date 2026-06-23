@@ -7,6 +7,7 @@ import { AdminsModule } from './admins/admins.module';
 import { AuthModule } from './auth/auth.module';
 import { AdsModule } from './ads/ads.module';
 import { CustomizationModule } from './customization/customization.module';
+import { ProjectsModule } from './projects/projects.module';
 import { MongooseModule, InjectConnection } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Connection } from 'mongoose';
@@ -24,7 +25,7 @@ import { Connection } from 'mongoose';
         uri: configService.get<string>('MONGO_URI'),
       };
     }
-  }), CommonModule, PropertiesModule, AdminsModule, AuthModule, AdsModule, CustomizationModule],
+  }), CommonModule, PropertiesModule, AdminsModule, AuthModule, AdsModule, CustomizationModule, ProjectsModule],
   controllers: [AppController],
   providers: [AppService],
 })

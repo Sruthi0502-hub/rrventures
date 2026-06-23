@@ -13,9 +13,6 @@ export class CustomizationController {
   constructor(private readonly customizationService: CustomizationService) {}
 
   @Get()
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   async getCustomization() {
     return this.customizationService.findOne();
   }
