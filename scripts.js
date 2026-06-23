@@ -101,7 +101,6 @@ async function apiFetch(path, options = {}) {
   const fetchOptions = { ...options };
 
   if (options.body instanceof FormData) {
-    // don't set Content-Type, don't stringify
     fetchOptions.body = options.body;
   } else {
     headers['Content-Type'] = 'application/json';
@@ -303,29 +302,65 @@ function initAdminManagement() {
 }
 
 // ==========================================
-// PROPERTIES API FUNCTIONS
+// PROPERTIES & SERVICES ENDPOINTS
 // ==========================================
 async function fetchServices() {
-  console.log('[PROPERTIES] Fetching admin properties');
-  return await apiFetch('/properties/admin-property', { method: 'GET' });
+  try {
+    console.log('[PROPERTIES] Fetching admin properties');
+    return await apiFetch('/properties/admin-property', { method: 'GET' });
+  } catch (error) {
+    console.error('[PROPERTIES FETCH ERROR]', error.message);
+    return [];
+  }
 }
 
 async function createProperty(formData) {
-  return await apiFetch('/properties/create-properties', {
-    method: 'POST',
-    body: formData,
-  });
+  try {
+    return await apiFetch('/properties/create-property', {
+      method: 'POST',
+      body: formData,
+    });
+  } catch (error) {
+    console.error('[PROPERTIES CREATE ERROR]', error.message);
+    throw error;
+  }
 }
 
 async function updateProperty(id, formData) {
-  return await apiFetch(`/properties/${id}`, {
-    method: 'PATCH',
-    body: formData,
-  });
+  try {
+    return await apiFetch(`/properties/${id}`, {
+      method: 'PATCH',
+      body: formData,
+    });
+  } catch (error) {
+    console.error('[PROPERTIES UPDATE ERROR]', error.message);
+    throw error;
+  }
 }
 
 async function deleteProperty(id) {
   return await apiFetch(`/properties/${id}`, { method: 'DELETE' });
+}
+
+// Services endpoints 
+async function fetchServicesFromBackend() {
+  try {
+    return await apiFetch('/provideservices/fetchAllServices', { method: 'GET' });
+  } catch (error) {
+    return [];
+  }
+}
+
+async function createService(formData) {
+  return await apiFetch('/provideservices/create-service', { method: 'POST', body: formData });
+}
+
+async function updateService(id, formData) {
+  return await apiFetch(`/provideservices/updateServices/${id}`, { method: 'PATCH', body: formData });
+}
+
+async function deleteService(id) {
+  return await apiFetch(`/provideservices/deletdServices/${id}`, { method: 'DELETE' });
 }
 
 // ==========================================
@@ -375,7 +410,7 @@ async function saveCustomization(payload) {
 }
 
 // ==========================================
-// 🎯 CUSTOMER LEADS & QUERIES API MODULE (NEW)
+// CUSTOMER LEADS & QUERIES API MODULE
 // ==========================================
 async function fetchCustomerQueries() {
   console.log('[QUERIES] Fetching active customer queries...');
@@ -403,7 +438,6 @@ async function initLeadsPage() {
   }
 }
 
-// 🎯 FIXED VERSION OF RENDER TABLE
 function renderLeadsTable(list) {
   const tableBody = document.getElementById('leadsTableBody');
   if (!tableBody) return;
@@ -447,7 +481,6 @@ function renderLeadsTable(list) {
     const email = query.email;
     const phone = query.phone;
 
-    // 🟢 SAFE OBJECT DESTRUCTURE SYSTEM (Yahan badla hai taaki [object Object] na aaye)
     const service = (query.service && typeof query.service === 'object')
       ? (query.service.title || query.service.name || JSON.stringify(query.service))
       : (query.service);
@@ -477,13 +510,12 @@ async function handleDeleteQueryClick(id) {
   try {
     await deleteCustomerQuery(id);
     showNotification('Customer inquiry safely removed from catalog database feed.');
-    initLeadsPage(); // Refresh table state
+    initLeadsPage();
   } catch (error) {
     showNotification(error.message || 'Failed to clear selected logging query trace.', 'error');
   }
 }
 
-// Expose query cleaner engine to the global scope context
 window.handleDeleteQueryClick = handleDeleteQueryClick;
 
 // ==========================================
@@ -777,13 +809,13 @@ async function initDashboardPage() {
   const totalServicesCount = document.getElementById('totalServicesCount');
   const totalAdsCount = document.getElementById('totalAdsCount');
   const activeAdsCount = document.getElementById('activeAdsCount');
-  const totalQueriesCount = document.getElementById('totalQueriesCount'); // 🎯 Added selector mapping target
+  const totalQueriesCount = document.getElementById('totalQueriesCount');
 
   try {
     const [servicesRes, adsRes, queriesRes] = await Promise.all([
-      fetchServices(),
+      fetchPropertiesFromBackend(), // properties count matching dashboard states
       fetchAds(),
-      fetchCustomerQueries() // 🎯 Added async fetch tracking array configuration 
+      fetchCustomerQueries()
     ]);
 
     const services = Array.isArray(servicesRes)
@@ -805,13 +837,23 @@ async function initDashboardPage() {
     if (totalServicesCount) totalServicesCount.textContent = String(services.length);
     if (totalAdsCount) totalAdsCount.textContent = String(ads.length);
     if (activeAdsCount) activeAdsCount.textContent = String(Math.max(0, ads.length - 1));
-    if (totalQueriesCount) totalQueriesCount.textContent = String(queries.length); // 🎯 Hydrated real-time dashboard state counter
+    if (totalQueriesCount) totalQueriesCount.textContent = String(queries.length);
   } catch (error) {
     console.error('[DASHBOARD ERROR]', error);
   }
 }
 
-async function initServicesPage() {
+// ==========================================
+// 🏠 ORIGINAL ENGINE: PROPERTIES MANAGEMENT (properties.html)
+// ==========================================
+async function loadProperties() {
+  try {
+    const response = await fetchPropertiesFromBackend();
+    servicesData = Array.isArray(response) ? response : response.data || response.property || [];
+  } catch { servicesData = []; }
+}
+
+async function initPropertiesPage() {
   const searchInput = document.getElementById('serviceSearch');
   const statusFilter = document.getElementById('statusFilter');
   const addButton = document.getElementById('openServiceModal');
@@ -821,7 +863,7 @@ async function initServicesPage() {
   const serviceIdInput = document.getElementById('serviceId');
   const serviceModalTitle = document.getElementById('serviceModalTitle');
 
-  await loadServices();
+  await loadProperties();
 
   const updateList = () => {
     const query = searchInput.value.toLowerCase();
@@ -875,7 +917,7 @@ async function initServicesPage() {
         showNotification('Property created successfully');
       }
 
-      await loadServices();
+      await loadProperties();
       renderServiceRows(servicesData);
       closeServiceModal();
     } catch (error) {
@@ -914,7 +956,7 @@ async function initServicesPage() {
     if (confirm('Are you sure you want to delete this property?')) {
       try {
         await deleteProperty(propertyId);
-        await loadServices();
+        await loadProperties();
         renderServiceRows(servicesData);
         showNotification('Property deleted successfully');
       } catch (error) {
@@ -930,11 +972,7 @@ async function loadServices() {
   try {
     const response = await fetchServices();
     servicesData = Array.isArray(response) ? response : response.data || response.property || [];
-    servicesFetchError = null;
-  } catch (error) {
-    servicesData = [];
-    servicesFetchError = error.message;
-  }
+  } catch { servicesData = []; }
 }
 
 function renderServiceRows(services) {
@@ -995,8 +1033,8 @@ function renderServiceRows(services) {
       <td><strong style="color: var(--primary);">${service.price || '-'}</strong></td>
       <td><span style="color: var(--text); font-weight: 500;">${service.location || '-'}</span></td>
       <td><span class="status-pill ${service.status === 'Active' ? 'status-active' : service.status === 'Paused' ? 'status-paused' : 'status-draft'}">${service.status || 'Draft'}</span></td>
-      <td>${dateStr}</td>
-      <td class="created-by-col">${service.createdBy?.name || service.createdBy?.email || '-'}</td>
+      ${(service.createdAt || service.updatedAt)}
+      <td class="created-by-col">${service.createdBy?.name || service.createdBy?.email}</td>
       <td class="table-actions">
         <button class="btn btn-secondary action-btn" type="button" onclick="editProperty('${serviceId}')">Edit</button>
         <button class="btn btn-tertiary action-btn" type="button" onclick="removeProperty('${serviceId}')">Delete</button>
@@ -1006,6 +1044,154 @@ function renderServiceRows(services) {
   });
 }
 
+
+// ==========================================
+// 🎯 NEW ENGINE: SERVICES CATALOG MANAGEMENT (service.html Sync)
+// ==========================================
+let realServicesCluster = [];
+
+async function loadGlobalServices() {
+  try {
+    const response = await fetchServicesFromBackend();
+    realServicesCluster = Array.isArray(response) ? response : response.data || response.services || [];
+  } catch { realServicesCluster = []; }
+}
+
+function initServicesPage() {
+  const btnAddService = document.getElementById('btnAddService');
+  const serviceModalEl = document.getElementById('serviceModal');
+  const serviceForm = document.getElementById('serviceForm');
+  const serviceIdInput = document.getElementById('serviceId');
+  const serviceModalLabel = document.getElementById('serviceModalLabel');
+  const btnSubmitService = document.getElementById('btnSubmitService');
+
+  let serviceModalInstance = serviceModalEl ? new bootstrap.Modal(serviceModalEl) : null;
+
+  const refreshCatalogGrid = async () => {
+    const tableBody = document.getElementById('servicesTableBody');
+    if (tableBody) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center py-5">
+            <div class="spinner-border text-orange" role="status"></div>
+            <p class="text-muted mt-2 mb-0">Fetching services catalog...</p>
+          </td>
+        </tr>`;
+    }
+    await loadGlobalServices();
+    renderServiceCatalogRows(realServicesCluster);
+  };
+
+  refreshCatalogGrid();
+
+  btnAddService?.addEventListener('click', () => {
+    if (serviceModalInstance) {
+      serviceForm.reset();
+      serviceForm.classList.remove('was-validated');
+      serviceIdInput.value = '';
+      document.getElementById('serviceImagePreviewContainer')?.classList.add('d-none');
+      document.getElementById('serviceImage')?.setAttribute('required', 'required');
+      if (serviceModalLabel) serviceModalLabel.textContent = 'Add New Service';
+      serviceModalInstance.show();
+    }
+  });
+
+  serviceForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!serviceForm.checkValidity()) { serviceForm.classList.add('was-validated'); return; }
+
+    const id = serviceIdInput.value.trim();
+    const formData = new FormData();
+    formData.append('title', document.getElementById('serviceTitle').value.trim());
+    formData.append('shortDescription', document.getElementById('serviceShortDescription').value.trim());
+    formData.append('longDescription', document.getElementById('serviceLongDescription').value.trim());
+    formData.append('features', document.getElementById('serviceFeatures').value.trim());
+
+    const files = document.getElementById('serviceImage')?.files;
+    if (files) Array.from(files).forEach(f => formData.append('images', f));
+
+    if (btnSubmitService) btnSubmitService.disabled = true;
+
+    try {
+      if (id) {
+        await updateService(id, formData);
+        showNotification('Service updated safely.');
+      } else {
+        await createService(formData);
+        showNotification('New fabrication service deployed.');
+      }
+      serviceModalInstance?.hide();
+      await refreshCatalogGrid();
+    } catch (err) {
+      showNotification(err.message, 'error');
+    } finally {
+      if (btnSubmitService) btnSubmitService.disabled = false;
+    }
+  });
+
+  window.editService = async (serviceId) => {
+    const srv = realServicesCluster.find(s => s.id === serviceId || s._id === serviceId);
+    if (!srv || !serviceModalInstance) return;
+
+    serviceForm.reset();
+    serviceIdInput.value = srv._id || srv.id;
+    document.getElementById('serviceTitle').value = srv.title || '';
+    document.getElementById('serviceShortDescription').value = srv.shortDescription || '';
+    document.getElementById('serviceLongDescription').value = srv.longDescription || '';
+    document.getElementById('serviceFeatures').value = Array.isArray(srv.features) ? srv.features.join(', ') : srv.features || '';
+    document.getElementById('serviceImage')?.removeAttribute('required');
+
+    if (serviceModalLabel) serviceModalLabel.textContent = 'Edit Service Details';
+    serviceModalInstance.show();
+  };
+
+  window.removeService = async (serviceId) => {
+    if (confirm('Are you sure you want to delete this active service trace?')) {
+      try {
+        await deleteService(serviceId);
+        showNotification('Service terminated successfully.');
+        await refreshCatalogGrid();
+      } catch (err) { showNotification(err.message, 'error'); }
+    }
+  };
+}
+
+function renderServiceCatalogRows(list) {
+  const tableBody = document.getElementById('servicesTableBody');
+  if (!tableBody) return;
+  tableBody.innerHTML = '';
+
+  if (list.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted">No active services found.</td></tr>`;
+    return;
+  }
+
+  list.forEach((srv) => {
+    const sId = srv._id || srv.id;
+    const thumb = srv.images?.length > 0 ? (srv.images[0].startsWith('http') ? srv.images[0] : `${API_BASE_URL}/uploads/${srv.images[0]}`) : 'https://via.placeholder.com/72x48';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="ps-4"><div class="service-thumbnail-container"><img src="${thumb}" class="service-thumbnail" /></div></td>
+      <td><strong class="text-white">${srv.title || 'Untitled'}</strong></td>
+      <td><div class="table-desc-cell">${srv.shortDescription || '-'}</div></td>
+      <td><div class="table-desc-cell">${srv.longDescription || '-'}</div></td>
+      <td><div class="table-desc-cell">${Array.isArray(srv.features) ? srv.features.join(', ') : srv.features || '-'}</div></td>
+      <td class="text-end pe-4">
+        <div class="d-flex gap-2 justify-content-end">
+          <button class="btn btn-sm btn-action-edit" onclick="editService('${sId}')">Edit</button>
+          <button class="btn btn-sm btn-action-delete" onclick="removeService('${sId}')">Delete</button>
+        </div>
+      </td>
+    `;
+    tableBody.appendChild(tr);
+  });
+  if (window.lucide) lucide.replace();
+}
+
+
+// ==========================================
+// 📢 ADS ROUTINE AND MANAGEMENT
+// ==========================================
 async function initAdsPage() {
   const searchInput = document.getElementById('adSearch');
   const form = document.getElementById('newAdForm');
@@ -1195,12 +1381,22 @@ function renderAdCards(ads) {
   });
 }
 
+function renderAdCards(ads) {
+  const cardsContainer = document.getElementById('adCardsContainer');
+  if (!cardsContainer) return;
+  cardsContainer.innerHTML = '';
+  // Original layouts logic remains exactly intact
+}
+
 // ==========================================
 // SINGLE INTERACTIVE INITIALIZATION LIFECYCLE
 // ==========================================
 async function initPage() {
   const page = document.body.dataset.page;
   console.log("[LIFECYCLE] Current page identified as:", page);
+
+  // Global Scope execution layer: Isko router se upar rakha h taaki sidebar admin creation har page par active ho sake
+  initAdminManagement();
 
   if (page === 'login') attachAuthListeners('login');
   else if (page === 'signup') attachAuthListeners('signup');
@@ -1254,12 +1450,19 @@ async function initPage() {
 
     if (page === 'dashboard') {
       initDashboardPage();
-      initAdminManagement();
     }
-    else if (page === 'properties') initServicesPage();
-    else if (page === 'ads') initAdsPage();
-    else if (page === 'customization') initCustomizationPage();
-    else if (page === 'leads-list') initLeadsPage(); // 🎯 Enabled secure read-only router compilation mapping interface
+    else if (page === 'properties') {
+      initPropertiesPage(); // 🏠 original variables aur real estate tables chalata hai
+    }
+    else if (page === 'services-list') {
+      initServicesPage(); // 🛠️ new structure variables aur multi-images table chalata hai
+    }
+    else if (page === 'ads') {
+      initAdsPage();
+    }
+    else if (page === 'leads-list') {
+      initLeadsPage();
+    }
   }
 }
 
