@@ -34,6 +34,8 @@
         <a href="properties.html"><i data-lucide="tool"></i>Properties</a>
         <a href="services.html"><i data-lucide="concierge-bell"></i>Services</a>
 
+        <a href="query.html"><i data-lucide="message-square"></i>Customer Queries</a>
+
         <a href="javascript:void(0);" class="nav-item" id="manageAdminsTab" data-tab="admins"
           onclick="const m = document.getElementById('adminModal'); if(m){ m.style.setProperty('display', 'flex', 'important'); m.classList.add('active'); }">
           <i data-lucide="users"></i>
@@ -77,6 +79,18 @@
           </div>
           <span id="servicesUpdatedLabel">Updated today</span>
         </article>
+
+        <article class="stat-card">
+          <div class="stat-header">
+            <div>
+              <p>Customer Queries</p>
+              <h2 id="totalQueriesCount">0</h2>
+            </div>
+            <div class="card-icon"><i data-lucide="message-square"></i></div>
+          </div>
+          <span id="queriesUpdatedLabel">Awaiting scripts.js live feed</span>
+        </article>
+
         <article class="stat-card">
           <div class="stat-header">
             <div>
@@ -96,16 +110,6 @@
             <div class="card-icon"><i data-lucide="play-circle"></i></div>
           </div>
           <span>Running across channels</span>
-        </article>
-        <article class="stat-card">
-          <div class="stat-header">
-            <div>
-              <p>Current Team</p>
-              <h2 id="teamSize">1</h2>
-            </div>
-            <div class="card-icon"><i data-lucide="users"></i></div>
-          </div>
-          <span>Active administrators</span>
         </article>
       </section>
 
@@ -132,9 +136,16 @@
       <section class="panel-card activity-card">
         <div class="panel-header">
           <h2>Recent activity</h2>
-          <a href="services.html" class="link-secondary">View all activity</a>
+          <a href="index.html" class="link-secondary">View all queries</a>
         </div>
-        <div class="activity-list">
+        <div class="activity-list" id="dashboardActivityList">
+          <div class="activity-item">
+            <div>
+              <strong>New lead registered</strong>
+              <p>Customer left a query regarding Tanker Body Fabrication design specs.</p>
+            </div>
+            <span>Just now</span>
+          </div>
           <div class="activity-item">
             <div>
               <strong>Service listing updated</strong>
@@ -148,13 +159,6 @@
               <p>New summer promotion campaign is live.</p>
             </div>
             <span>5h ago</span>
-          </div>
-          <div class="activity-item">
-            <div>
-              <strong>Brand settings saved</strong>
-              <p>Footer text and company description were updated.</p>
-            </div>
-            <span>Yesterday</span>
           </div>
         </div>
       </section>
@@ -239,7 +243,6 @@
         }
       });
 
-      // Background touch detection to dismiss admin form modal dynamically
       const targetModal = document.getElementById('adminModal');
       window.addEventListener('click', (e) => {
         if (e.target === targetModal) {

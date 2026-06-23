@@ -12,6 +12,7 @@ const storageKeys = {
 // Backend data storage
 let servicesData = [];
 let adsData = [];
+let queriesData = []; // 🎯 Added state container for leads/queries
 
 // ==========================================
 // CORE HELPER FUNCTIONS (No Duplicates)
@@ -158,7 +159,7 @@ async function loginUser(payload) {
           const userData = {
             userId: decoded.sub,
             email: decoded.email,
-            role: decoded.role, // Yahan backend se 'admin' ya 'super-admin' milega
+            role: decoded.role,
             name: decoded.name
           };
           localStorage.setItem(storageKeys.user, JSON.stringify(userData));
@@ -413,6 +414,104 @@ async function saveCustomization(payload) {
 }
 
 // ==========================================
+// 🎯 CUSTOMER LEADS & QUERIES API MODULE (NEW)
+// ==========================================
+async function fetchCustomerQueries() {
+  try {
+    console.log('[QUERIES] Fetching active customer queries...');
+    return await apiFetch('/query/fetchAll-query', { method: 'GET' });
+  } catch (error) {
+    console.error('[QUERIES FETCH ERROR]', error.message);
+    return [];
+  }
+}
+
+async function deleteCustomerQuery(id) {
+  try {
+    return await apiFetch(`/publicquery/deleteQuery/${id}`, { method: 'DELETE' });
+  } catch (error) {
+    console.error('[QUERIES DELETE ERROR]', error.message);
+    throw error;
+  }
+}
+
+async function initLeadsPage() {
+  const tableBody = document.getElementById('leadsTableBody');
+  if (!tableBody) return;
+
+  try {
+    const response = await fetchCustomerQueries();
+    queriesData = Array.isArray(response) ? response : response.data || [];
+    renderLeadsTable(queriesData);
+  } catch (error) {
+    console.error('[LEADS PAGE INITIALIZATION ERROR]', error);
+    renderLeadsTable([]);
+  }
+}
+
+// 🎯 FIXED VERSION OF RENDER TABLE
+function renderLeadsTable(list) {
+  const tableBody = document.getElementById('leadsTableBody');
+  if (!tableBody) return;
+  tableBody.innerHTML = '';
+
+  if (!list || list.length === 0) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="6" class="text-center py-4 text-muted">
+          No customer inquiries or leads registered yet.
+        </td>
+      </tr>`;
+    return;
+  }
+
+  list.forEach(query => {
+    const tr = document.createElement('tr');
+    const id = query._id || query.id;
+    const name = query.Name;
+    const email = query.email;
+    const phone = query.phone;
+
+    // 🟢 SAFE OBJECT DESTRUCTURE SYSTEM (Yahan badla hai taaki [object Object] na aaye)
+    const service = (query.service && typeof query.service === 'object')
+      ? (query.service.title || query.service.name || JSON.stringify(query.service))
+      : (query.service);
+
+    const message = query.message || '';
+
+    tr.innerHTML = `
+      <td class="ps-4 fw-semibold text-steel">${name}</td>
+      <td>${email}</td>
+      <td>${phone}</td>
+      <td><span class="badge bg-secondary">${service}</span></td>
+      <td class="table-desc-cell" title="${message}">${message}</td>
+      <td class="text-end pe-4">
+        <button class="btn btn-action btn-action-delete btn-sm" onclick="handleDeleteQueryClick('${id}')">
+          <i data-lucide="trash-2" style="width:16px; height:16px;"></i>
+        </button>
+      </td>
+    `;
+    tableBody.appendChild(tr);
+  });
+
+  if (window.lucide) lucide.replace({ width: 16, height: 16 });
+}
+
+async function handleDeleteQueryClick(id) {
+  if (!confirm('Are you sure you want to permanently clear this customer query trace?')) return;
+  try {
+    await deleteCustomerQuery(id);
+    showNotification('Customer inquiry safely removed from catalog database feed.');
+    initLeadsPage(); // Refresh table state
+  } catch (error) {
+    showNotification(error.message || 'Failed to clear selected logging query trace.', 'error');
+  }
+}
+
+// Expose query cleaner engine to the global scope context
+window.handleDeleteQueryClick = handleDeleteQueryClick;
+
+// ==========================================
 // ROUTING GUARDS
 // ==========================================
 function redirectIfAuthenticated() {
@@ -432,7 +531,6 @@ function validateEmail(email) {
   return emailRegex.test(email);
 }
 
-// Pass 'isLogin' parameter to skip strict checks during login
 function validatePassword(password, isLogin = false) {
   const errors = [];
 
@@ -441,7 +539,6 @@ function validatePassword(password, isLogin = false) {
     return { isValid: false, errors };
   }
 
-  // Agar login chal raha h toh bas requirements skip karke valid return kar do
   if (isLogin) {
     return {
       isValid: true,
@@ -449,7 +546,6 @@ function validatePassword(password, isLogin = false) {
     };
   }
 
-  // ---- SIGNUP COMPLEXITY CHECKS ----
   if (password.length < 8) {
     errors.push('Password must be at least 8 characters long.');
   }
@@ -539,7 +635,6 @@ function setupFormValidation(type) {
         else passwordFeedback.classList.remove('visible');
       }
     } else {
-      // Pass type === 'login' status dynamically
       const res = validatePassword(value, isLoginMode);
       if (!res.isValid) {
         isPasswordValid = false;
@@ -619,7 +714,6 @@ function attachAuthListeners(type) {
   const status = document.getElementById(`${type}Status`);
   if (!form) return;
 
-  // Make sure these global hooks exist elsewhere in your codebase
   if (typeof redirectIfAuthenticated === 'function') redirectIfAuthenticated();
   setupFormValidation(type);
 
@@ -657,7 +751,6 @@ function attachAuthListeners(type) {
     }
 
     try {
-      // API call hooks check
       if (isLoginMode && typeof loginUser === 'function') {
         await loginUser(payload);
       } else if (!isLoginMode && typeof signupUser === 'function') {
@@ -709,11 +802,13 @@ async function initDashboardPage() {
   const totalServicesCount = document.getElementById('totalServicesCount');
   const totalAdsCount = document.getElementById('totalAdsCount');
   const activeAdsCount = document.getElementById('activeAdsCount');
+  const totalQueriesCount = document.getElementById('totalQueriesCount'); // 🎯 Added selector mapping target
 
   try {
-    const [servicesRes, adsRes] = await Promise.all([
+    const [servicesRes, adsRes, queriesRes] = await Promise.all([
       fetchServices(),
-      fetchAds()
+      fetchAds(),
+      fetchCustomerQueries() // 🎯 Added async fetch tracking array configuration 
     ]);
 
     const services = Array.isArray(servicesRes)
@@ -730,9 +825,12 @@ async function initDashboardPage() {
         ? adsRes.data
         : [];
 
+    const queries = Array.isArray(queriesRes) ? queriesRes : queriesRes.data || [];
+
     if (totalServicesCount) totalServicesCount.textContent = String(services.length);
     if (totalAdsCount) totalAdsCount.textContent = String(ads.length);
     if (activeAdsCount) activeAdsCount.textContent = String(Math.max(0, ads.length - 1));
+    if (totalQueriesCount) totalQueriesCount.textContent = String(queries.length); // 🎯 Hydrated real-time dashboard state counter
   } catch (error) {
     console.error('[DASHBOARD ERROR]', error);
   }
@@ -1039,124 +1137,6 @@ async function loadAds() {
   }
 }
 
-function renderAdCards(ads) {
-  const adGrid = document.getElementById('adGrid');
-  if (!adGrid) return;
-  adGrid.innerHTML = '';
-
-  if (ads.length === 0) {
-    adGrid.innerHTML = `
-      <div class="empty-state" style="grid-column: 1/-1; min-height: 300px;">
-        <div class="empty-state-icon">📢</div>
-        <h3>No advertisements yet</h3>
-        <p>Create your first advertisement campaign to get started.</p>
-      </div>
-    `;
-    return;
-  }
-
-  ads.forEach((ad) => {
-    const card = document.createElement('article');
-    card.className = 'ad-card';
-    const adId = ad._id || ad.id;
-    const priceDisplay = ad.price ? `<p class="ad-price" style="color: var(--primary); font-weight: bold; margin-top: 0.5rem;">$${ad.price}</p>` : '';
-    const adImageUrl = ad.image
-      ? (ad.image.startsWith('http') ? ad.image : `${API_BASE_URL}/uploads/${ad.image}`)
-      : 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=120&q=80';
-    card.innerHTML = `
-      <div class="ad-media" style="background-image: url('${adImageUrl}'); background-size: cover; background-position: center;">
-        ${ad.image ? '' : 'Image preview'}
-      </div>
-      <div class="ad-content">
-        <h3>${ad.title || 'Untitled'}</h3>
-        <p>${ad.description || '-'}</p>
-        ${priceDisplay}
-        <div class="ad-actions">
-          <button class="btn btn-secondary" type="button" onclick="editAd('${adId}')">Edit</button>
-          <button class="btn btn-tertiary" type="button" onclick="removeAd('${adId}')">Delete</button>
-        </div>
-      </div>
-    `;
-    adGrid.appendChild(card);
-  });
-}
-
-async function initCustomizationPage() {
-  const saveBtn = document.getElementById('saveBtn');
-  const resetBtn = document.getElementById('resetBtn');
-  const notification = document.getElementById('notification');
-  const descriptionInput = document.getElementById('companyDescription');
-  const descriptionCount = document.getElementById('descriptionCount');
-
-  let customizationData = {};
-  try {
-    const response = await fetchCustomization();
-    customizationData = response.data || response || {};
-
-    if (customizationData.companyName) document.getElementById('companyName').value = customizationData.companyName;
-    if (customizationData.companyEmail) document.getElementById('companyEmail').value = customizationData.companyEmail;
-    if (customizationData.companyDescription) descriptionInput.value = customizationData.companyDescription;
-    if (customizationData.contactPhone) document.getElementById('contactPhone').value = customizationData.contactPhone;
-    if (customizationData.contactAddress) document.getElementById('contactAddress').value = customizationData.contactAddress;
-    if (customizationData.footerText) document.getElementById('footerText').value = customizationData.footerText;
-  } catch (error) {
-    console.error('[LOAD CUSTOMIZATION ERROR]', error);
-  }
-
-  const initialValues = {
-    companyName: document.getElementById('companyName')?.value || '',
-    companyEmail: document.getElementById('companyEmail')?.value || '',
-    companyDescription: descriptionInput?.value || '',
-    contactPhone: document.getElementById('contactPhone')?.value || '',
-    contactAddress: document.getElementById('contactAddress')?.value || '',
-    footerText: document.getElementById('footerText')?.value || ''
-  };
-
-  const updateCharCount = () => {
-    if (descriptionCount) descriptionCount.textContent = descriptionInput.value.length;
-  };
-  updateCharCount();
-  descriptionInput?.addEventListener('input', updateCharCount);
-
-  const showPageNotification = (message, type = 'success') => {
-    if (notification) {
-      notification.className = `notification active notification-${type}`;
-      const icon = type === 'success' ? 'check-circle' : 'alert-circle';
-      notification.innerHTML = `<i data-lucide="${icon}"></i><span>${message}</span>`;
-      if (window.lucide) lucide.replace({ width: 18, height: 18 });
-      setTimeout(() => notification.classList.remove('active'), 4000);
-    }
-  };
-
-  saveBtn?.addEventListener('click', async (event) => {
-    event.preventDefault();
-    const settings = {
-      companyName: document.getElementById('companyName')?.value || '',
-      companyEmail: document.getElementById('companyEmail')?.value || '',
-      companyDescription: document.getElementById('companyDescription')?.value || '',
-      contactPhone: document.getElementById('contactPhone')?.value || '',
-      contactAddress: document.getElementById('contactAddress')?.value || '',
-      footerText: document.getElementById('footerText')?.value || ''
-    };
-
-    try {
-      await saveCustomization(settings);
-      showPageNotification('Content settings saved successfully!');
-    } catch (error) {
-      showPageNotification(error.message || 'Failed to save settings', 'error');
-    }
-  });
-
-  resetBtn?.addEventListener('click', () => {
-    Object.keys(initialValues).forEach(key => {
-      const elem = document.getElementById(key.replace(/([A-Z])/g, c => '-' + c.toLowerCase()).substring(1)) || document.getElementById(key);
-      if (elem) elem.value = initialValues[key];
-    });
-    updateCharCount();
-    showPageNotification('Form reset to last saved values.');
-  });
-}
-
 // ==========================================
 // SINGLE INTERACTIVE INITIALIZATION LIFECYCLE
 // ==========================================
@@ -1167,10 +1147,8 @@ async function initPage() {
   if (page === 'login') attachAuthListeners('login');
   else if (page === 'signup') attachAuthListeners('signup');
   else {
-    // Protected pages
     redirectIfNotAuthenticated();
 
-    // Update profile elements immediately from cached data
     const updateProfileUI = () => {
       const user = getCurrentUser();
       const profileName = document.getElementById('profileName');
@@ -1193,7 +1171,6 @@ async function initPage() {
       }
       if (profileLetter) profileLetter.textContent = (user.name || user.email || 'R').charAt(0).toUpperCase();
 
-      // Remove/hide the Create Admins category tab for regular Admins, but show it for Super Admins
       const manageAdminsTab = document.getElementById('manageAdminsTab');
       if (manageAdminsTab) {
         const isSuperAdmin = user && user.role && (
@@ -1211,7 +1188,6 @@ async function initPage() {
 
     updateProfileUI();
 
-    // Fetch current admin name dynamically in the background to avoid blocking other page logic
     fetchAdminName().then((newName) => {
       if (newName) {
         updateProfileUI();
@@ -1225,379 +1201,8 @@ async function initPage() {
     else if (page === 'properties') initServicesPage();
     else if (page === 'ads') initAdsPage();
     else if (page === 'customization') initCustomizationPage();
+    else if (page === 'leads-list') initLeadsPage(); // 🎯 Enabled secure read-only router compilation mapping interface
   }
 }
 
 window.addEventListener('DOMContentLoaded', initPage);
-
-// ==========================================
-// SERVICES MANAGEMENT APIS INTEGRATION
-// ==========================================
-(function () {
-  // const API_BASE = '';
-  const IMAGE_BASE = `${API_BASE_URL}/uploads/`;
-
-  // State Variables
-  let servicesList = [];
-  let editMode = false;
-  let editingId = null;
-  let serviceModalInstance = null;
-
-  // DOM Elements
-  let servicesTableBody, alertContainer, serviceForm, serviceModalEl, serviceModalLabel;
-  let btnSubmitService, btnAddService, btnSignOut;
-  let serviceIdInput, serviceTitleInput, serviceShortDescriptionInput, serviceLongDescriptionInput, serviceFeaturesInput;
-  let serviceImageInput, labelServiceImage, feedbackServiceImage, serviceImagePreviewContainer, previewImagesWrapper;
-
-  document.addEventListener('DOMContentLoaded', () => {
-    // Only run if we are on the services.html page
-    if (!document.getElementById('servicesTable')) return;
-
-    servicesTableBody = document.getElementById('servicesTableBody');
-    alertContainer = document.getElementById('alertContainer');
-    serviceForm = document.getElementById('serviceForm');
-    serviceModalEl = document.getElementById('serviceModal');
-    serviceModalLabel = document.getElementById('serviceModalLabel');
-    btnSubmitService = document.getElementById('btnSubmitService');
-    btnAddService = document.getElementById('btnAddService');
-    btnSignOut = document.getElementById('btnSignOut');
-
-    serviceIdInput = document.getElementById('serviceId');
-    serviceTitleInput = document.getElementById('serviceTitle');
-
-    // 🎯 Nayi Fields ki sahi IDs yahan map kar di
-    serviceShortDescriptionInput = document.getElementById('serviceShortDescription');
-    serviceLongDescriptionInput = document.getElementById('serviceLongDescription');
-    serviceFeaturesInput = document.getElementById('serviceFeatures');
-
-    serviceImageInput = document.getElementById('serviceImage');
-    labelServiceImage = document.getElementById('labelServiceImage');
-    feedbackServiceImage = document.getElementById('feedbackServiceImage');
-    serviceImagePreviewContainer = document.getElementById('serviceImagePreviewContainer');
-    previewImagesWrapper = document.getElementById('previewImagesWrapper'); // Dynamic previews wrapper
-
-    serviceModalInstance = new bootstrap.Modal(serviceModalEl);
-
-    // Check Token
-    const token = localStorage.getItem('token');
-    if (!token) {
-      showAlert('No authentication token found in localStorage. Operations might fail. Please log in first.', 'danger');
-    }
-
-    // Fetch Services List
-    fetchServicesListLocal();
-
-    // Event Listeners
-    btnAddService.addEventListener('click', openCreateModal);
-    serviceForm.addEventListener('submit', handleFormSubmit);
-    btnSignOut.addEventListener('click', handleSignOut);
-
-    const inputs = serviceForm.querySelectorAll('input, textarea');
-    inputs.forEach(input => {
-      input.addEventListener('input', () => {
-        input.classList.remove('is-invalid');
-      });
-    });
-  });
-
-  async function fetchServicesListLocal() {
-    const token = localStorage.getItem('token');
-    try {
-      const response = await fetch(`${API_BASE_URL}/provideservices/fetchAllServices`, {
-        method: 'GET',
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : ''
-        }
-      });
-      if (!response.ok) throw new Error(`Server returned code ${response.status}`);
-      const data = await response.json();
-      servicesList = data.data || data || [];
-      renderTable(servicesList);
-    } catch (err) {
-      console.error('Fetch error:', err);
-      showAlert('Failed to load services from the server. Check your connection or API status.', 'danger');
-      renderTable([]);
-    }
-  }
-
-  function renderTable(list) {
-    if (!list || list.length === 0) {
-      servicesTableBody.innerHTML = `
-      <tr>
-        <td colspan="6" class="text-center py-4 text-muted">
-          No services found. Click "Add New Service" to insert one.
-        </td>
-      </tr>`;
-      return;
-    }
-    servicesTableBody.innerHTML = '';
-    list.forEach(s => {
-      const tr = document.createElement('tr');
-
-      // Pehli image array se nikalna safe side ke liye
-      const firstImage = s.images && s.images.length > 0 ? s.images[0] : null;
-      const imageSrc = firstImage ? `${IMAGE_BASE}${firstImage}` : 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80';
-
-      const title = s.title || 'Untitled Service';
-      const shortDesc = s.shortDescription || '';
-      const longDesc = s.longDescription || '';
-
-      // Array ko wapas comma-separated string dikhana table ke liye
-      const featuresStr = Array.isArray(s.features) ? s.features.join(', ') : (s.features || '');
-      const id = s._id || s.id;
-
-      // 🎯 Table me saare naye 6 columns render kar diye
-      tr.innerHTML = `
-      <td class="ps-4">
-        <div class="service-thumbnail-container">
-          <img src="${imageSrc}" alt="${title}" class="service-thumbnail" onerror="this.src='https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80'">
-        </div>
-      </td>
-      <td class="fw-semibold text-steel font-display" style="font-size: 15px;">${title}</td>
-      <td class="table-desc-cell">${shortDesc}</td>
-      <td class="table-desc-cell">${longDesc}</td>
-      <td class="table-desc-cell">${featuresStr}</td>
-      <td class="text-end pe-4">
-        <button class="btn btn-action btn-action-edit me-1" onclick="openEditModal('${id}')">
-          Edit
-        </button>
-        <button class="btn btn-action btn-action-delete" onclick="handleDeleteClick('${id}')">
-          Delete
-        </button>
-      </td>
-    `;
-      servicesTableBody.appendChild(tr);
-    });
-  }
-
-  function showAlert(message, type = 'success') {
-    const alertEl = document.createElement('div');
-    alertEl.className = `alert alert-${type === 'danger' ? 'danger' : 'success'} alert-dismissible fade show`;
-    alertEl.role = 'alert';
-    alertEl.innerHTML = `
-    <span>${message}</span>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  `;
-    alertContainer.appendChild(alertEl);
-    setTimeout(() => {
-      const bsAlert = bootstrap.Alert.getInstance(alertEl);
-      if (bsAlert) bsAlert.close();
-    }, 4000);
-  }
-
-  function openCreateModal() {
-    editMode = false;
-    editingId = null;
-    serviceForm.reset();
-    serviceForm.classList.remove('was-validated');
-    const invalidFields = serviceForm.querySelectorAll('.is-invalid');
-    invalidFields.forEach(f => f.classList.remove('is-invalid'));
-
-    serviceModalLabel.textContent = 'Add New Service';
-    btnSubmitService.textContent = 'Create Service';
-    serviceImageInput.setAttribute('required', 'required');
-    labelServiceImage.textContent = 'Service Images *';
-    feedbackServiceImage.textContent = 'Please select at least one image file.';
-    serviceImagePreviewContainer.classList.add('d-none');
-    if (previewImagesWrapper) previewImagesWrapper.innerHTML = '';
-    serviceModalInstance.show();
-  }
-
-  function openEditModal(id) {
-    editMode = true;
-    editingId = id;
-    serviceForm.reset();
-    serviceForm.classList.remove('was-validated');
-    const invalidFields = serviceForm.querySelectorAll('.is-invalid');
-    invalidFields.forEach(f => f.classList.remove('is-invalid'));
-
-    const item = servicesList.find(s => String(s._id || s.id) === String(id));
-    if (!item) {
-      showAlert('Error: Service not found locally.', 'danger');
-      return;
-    }
-
-    // 🎯 Data inputs me fill karna naye fields ke sath
-    serviceTitleInput.value = item.title || '';
-    serviceShortDescriptionInput.value = item.shortDescription || '';
-    serviceLongDescriptionInput.value = item.longDescription || '';
-    serviceFeaturesInput.value = Array.isArray(item.features) ? item.features.join(', ') : (item.features || '');
-
-    serviceModalLabel.textContent = 'Edit Service';
-    btnSubmitService.textContent = 'Save Changes';
-    serviceImageInput.removeAttribute('required');
-    labelServiceImage.textContent = 'Change Service Images (Optional)';
-    feedbackServiceImage.textContent = 'Please choose valid files.';
-
-    if (previewImagesWrapper) previewImagesWrapper.innerHTML = '';
-
-    if (item.images && item.images.length > 0) {
-      serviceImagePreviewContainer.classList.remove('d-none');
-      item.images.forEach(imgName => {
-        const img = document.createElement('img');
-        img.src = `${IMAGE_BASE}${imgName}`;
-        img.className = 'img-thumbnail';
-        img.style.cssText = 'height: 80px; width: 110px; object-fit: cover;';
-        previewImagesWrapper?.appendChild(img);
-      });
-    } else {
-      serviceImagePreviewContainer.classList.add('d-none');
-    }
-    serviceModalInstance.show();
-  }
-
-  async function handleFormSubmit(e) {
-    e.preventDefault();
-    let isValid = true;
-
-    // Validation checks
-    if (!serviceTitleInput.value.trim()) {
-      serviceTitleInput.classList.add('is-invalid');
-      isValid = false;
-    }
-    if (!serviceShortDescriptionInput.value.trim()) {
-      serviceShortDescriptionInput.classList.add('is-invalid');
-      isValid = false;
-    }
-    if (!serviceLongDescriptionInput.value.trim()) {
-      serviceLongDescriptionInput.classList.add('is-invalid');
-      isValid = false;
-    }
-    if (!serviceFeaturesInput.value.trim()) {
-      serviceFeaturesInput.classList.add('is-invalid');
-      isValid = false;
-    }
-    if (!editMode && serviceImageInput.files.length === 0) {
-      serviceImageInput.classList.add('is-invalid');
-      isValid = false;
-    }
-
-    if (!isValid) {
-      serviceForm.classList.add('was-validated');
-      return;
-    }
-
-    // 🎯 FormData creation matching NestJS Interceptor
-    const formData = new FormData();
-    formData.append('title', serviceTitleInput.value.trim());
-    formData.append('shortDescription', serviceShortDescriptionInput.value.trim());
-    formData.append('longDescription', serviceLongDescriptionInput.value.trim());
-
-    // 🛠️ Features क्लीनिंग: कॉमा से स्प्लिट करें, स्पेस हटाएं और खाली "" वैल्यूज को रिमूव करें
-    const featuresArray = serviceFeaturesInput.value
-      .split(',')
-      .map(f => f.trim())
-      .filter(f => f.length > 0);
-
-    // NestJS Files/Body Parsing के लिए एरे को सही से अपेंड करें
-    featuresArray.forEach(feature => {
-      formData.append('features', feature);
-    });
-
-    // Loop through multiple dynamic images
-    const files = serviceImageInput.files;
-    for (let i = 0; i < files.length; i++) {
-      formData.append('images', files[i]); // Matches FilesInterceptor('images')
-    }
-
-    const token = localStorage.getItem('token');
-    const headers = { 'Authorization': token ? `Bearer ${token}` : '' };
-
-    btnSubmitService.disabled = true;
-    btnSubmitService.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...`;
-
-    try {
-      let url = editMode
-        ? `${API_BASE_URL}/provideservices/updateServices/${editingId}`
-        : `${API_BASE_URL}/provideservices/create-Service`;
-      let method = editMode ? 'PATCH' : 'POST';
-
-      const response = await fetch(url, {
-        method: method,
-        headers: headers,
-        body: formData
-      });
-
-      // 🛠️ पहले चेक करें कि रिस्पॉन्स सही (200-299) है या नहीं
-      if (!response.ok) {
-        let errorMsg = 'Operation failed';
-        try {
-          const errorJson = await response.json();
-          errorMsg = errorJson.message || errorMsg;
-        } catch (parseErr) {
-          // अगर रिस्पॉन्स JSON नहीं है
-          errorMsg = `Server error: ${response.status}`;
-        }
-        throw new Error(errorMsg);
-      }
-
-      // अगर रिस्पॉन्स OK है, तभी JSON डेटा रीड करें
-      const resJson = await response.json();
-
-      showAlert(editMode ? 'Service updated successfully!' : 'Service created successfully!', 'success');
-
-      if (typeof serviceModalInstance !== 'undefined' && serviceModalInstance.hide) {
-        serviceModalInstance.hide();
-      }
-
-      if (typeof fetchServicesListLocal === 'function') {
-        fetchServicesListLocal();
-      }
-    } catch (err) {
-      console.error('Save error:', err);
-      showAlert(`Error: ${err.message || 'Failed to save service details.'}`, 'danger');
-    } finally {
-      btnSubmitService.disabled = false;
-      btnSubmitService.textContent = editMode ? 'Save Changes' : 'Create Service';
-    }
-  }
-
-  async function handleDeleteClick(id) {
-    const item = servicesList.find(s => String(s._id || s.id) === String(id));
-    const title = item ? (item.title || 'this service') : 'this service';
-
-    const confirmDelete = confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`);
-    if (!confirmDelete) return;
-
-    const token = localStorage.getItem('token');
-    const headers = {};
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/provideservices/deletdServices/${id}`, {
-        method: 'DELETE',
-        headers: headers
-      });
-
-      let resJson = {};
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        resJson = await response.json();
-      }
-
-      if (!response.ok) {
-        throw new Error(resJson.message || `Deletion failed with status ${response.status}`);
-      }
-
-      showAlert('Service deleted successfully!', 'success');
-      fetchServicesListLocal();
-    } catch (err) {
-      console.error('Delete error:', err);
-      showAlert(`Error: ${err.message || 'Failed to delete service.'}`, 'danger');
-    }
-  }
-
-  function handleSignOut() {
-    localStorage.removeItem('token');
-    showAlert('Signed out successfully. Token cleared.', 'success');
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
-  }
-
-  // Export handlers to global scope for HTML inline events
-  window.openEditModal = openEditModal;
-  window.handleDeleteClick = handleDeleteClick;
-})();
