@@ -13,6 +13,9 @@ const storageKeys = {
 let servicesData = [];
 let adsData = [];
 let queriesData = []; // 🎯 Added state container for leads/queries
+let servicesFetchError = null;
+let adsFetchError = null;
+let queriesFetchError = null;
 
 // ==========================================
 // CORE HELPER FUNCTIONS (No Duplicates)
@@ -303,93 +306,51 @@ function initAdminManagement() {
 // PROPERTIES API FUNCTIONS
 // ==========================================
 async function fetchServices() {
-  try {
-    console.log('[PROPERTIES] Fetching admin properties');
-    return await apiFetch('/properties/admin-property', { method: 'GET' });
-  } catch (error) {
-    console.error('[PROPERTIES FETCH ERROR]', error.message);
-    return [];
-  }
+  console.log('[PROPERTIES] Fetching admin properties');
+  return await apiFetch('/properties/admin-property', { method: 'GET' });
 }
 
 async function createProperty(formData) {
-  try {
-    return await apiFetch('/properties/create-property', {
-      method: 'POST',
-      body: formData,
-    });
-  } catch (error) {
-    console.error('[PROPERTIES CREATE ERROR]', error.message);
-    throw error;
-  }
+  return await apiFetch('/properties/create-properties', {
+    method: 'POST',
+    body: formData,
+  });
 }
 
 async function updateProperty(id, formData) {
-  try {
-    return await apiFetch(`/properties/${id}`, {
-      method: 'PATCH',
-      body: formData,
-    });
-  } catch (error) {
-    console.error('[PROPERTIES UPDATE ERROR]', error.message);
-    throw error;
-  }
+  return await apiFetch(`/properties/${id}`, {
+    method: 'PATCH',
+    body: formData,
+  });
 }
 
 async function deleteProperty(id) {
-  try {
-    return await apiFetch(`/properties/${id}`, { method: 'DELETE' });
-  } catch (error) {
-    console.error('[PROPERTIES DELETE ERROR]', error.message);
-    throw error;
-  }
+  return await apiFetch(`/properties/${id}`, { method: 'DELETE' });
 }
 
 // ==========================================
 // ADS API FUNCTIONS
 // ==========================================
 async function fetchAds() {
-  try {
-    return await apiFetch('/ads', { method: 'GET' });
-  } catch (error) {
-    console.error('[ADS FETCH ERROR]', error.message);
-    return { data: [] };
-  }
+  return await apiFetch('/ads', { method: 'GET' });
 }
 
 async function createAd(formData) {
-  try {
-    return await apiFetch('/properties/create-properties', {
-      method: 'POST',
-      body: formData,
-      isFormData: true,
-    });
-  } catch (error) {
-    console.error('[ADS CREATE ERROR]', error.message);
-    throw error;
-  }
+  return await apiFetch('/ads', {
+    method: 'POST',
+    body: formData,
+  });
 }
 
 async function updateAd(id, formData) {
-  try {
-    return await apiFetch(`/ads/${id}`, {
-      method: 'PATCH',
-      body: formData,
-      isFormData: true,
-    });
-  } catch (error) {
-    console.error('[ADS UPDATE ERROR]', error.message);
-    throw error;
-  }
+  return await apiFetch(`/ads/${id}`, {
+    method: 'PATCH',
+    body: formData,
+  });
 }
 
 async function deleteAd(id) {
-  try {
-    return await apiFetch(`/ads/${id}`, { method: 'DELETE' });
-  } catch (error) {
-    console.error('[ADS DELETE ERROR]', error.message);
-    throw error;
-  }
+  return await apiFetch(`/ads/${id}`, { method: 'DELETE' });
 }
 
 // ==========================================
@@ -417,22 +378,12 @@ async function saveCustomization(payload) {
 // 🎯 CUSTOMER LEADS & QUERIES API MODULE (NEW)
 // ==========================================
 async function fetchCustomerQueries() {
-  try {
-    console.log('[QUERIES] Fetching active customer queries...');
-    return await apiFetch('/query/fetchAll-query', { method: 'GET' });
-  } catch (error) {
-    console.error('[QUERIES FETCH ERROR]', error.message);
-    return [];
-  }
+  console.log('[QUERIES] Fetching active customer queries...');
+  return await apiFetch('/query/fetchAll-query', { method: 'GET' });
 }
 
 async function deleteCustomerQuery(id) {
-  try {
-    return await apiFetch(`/publicquery/deleteQuery/${id}`, { method: 'DELETE' });
-  } catch (error) {
-    console.error('[QUERIES DELETE ERROR]', error.message);
-    throw error;
-  }
+  return await apiFetch(`/publicquery/deleteQuery/${id}`, { method: 'DELETE' });
 }
 
 async function initLeadsPage() {
@@ -442,9 +393,12 @@ async function initLeadsPage() {
   try {
     const response = await fetchCustomerQueries();
     queriesData = Array.isArray(response) ? response : response.data || [];
+    queriesFetchError = null;
     renderLeadsTable(queriesData);
   } catch (error) {
     console.error('[LEADS PAGE INITIALIZATION ERROR]', error);
+    queriesData = [];
+    queriesFetchError = error.message;
     renderLeadsTable([]);
   }
 }
@@ -455,11 +409,32 @@ function renderLeadsTable(list) {
   if (!tableBody) return;
   tableBody.innerHTML = '';
 
+  if (queriesFetchError) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="6" class="text-center py-5">
+          <div class="empty-state">
+            <div class="empty-state-icon">⚠️</div>
+            <h3>Failed to load customer queries</h3>
+            <p style="color: var(--error); font-weight: 500;">${queriesFetchError}</p>
+            <button class="btn btn-secondary btn-sm" onclick="initLeadsPage()">
+              Retry
+            </button>
+          </div>
+        </td>
+      </tr>`;
+    return;
+  }
+
   if (!list || list.length === 0) {
     tableBody.innerHTML = `
       <tr>
-        <td colspan="6" class="text-center py-4 text-muted">
-          No customer inquiries or leads registered yet.
+        <td colspan="6" class="text-center py-5">
+          <div class="empty-state">
+            <div class="empty-state-icon">📩</div>
+            <h3>No customer inquiries yet</h3>
+            <p>No customer inquiries or leads registered yet.</p>
+          </div>
         </td>
       </tr>`;
     return;
@@ -955,13 +930,33 @@ async function loadServices() {
   try {
     const response = await fetchServices();
     servicesData = Array.isArray(response) ? response : response.data || response.property || [];
-  } catch { servicesData = []; }
+    servicesFetchError = null;
+  } catch (error) {
+    servicesData = [];
+    servicesFetchError = error.message;
+  }
 }
 
 function renderServiceRows(services) {
   const tableBody = document.getElementById('serviceRows');
   if (!tableBody) return;
   tableBody.innerHTML = '';
+
+  if (servicesFetchError) {
+    tableBody.innerHTML = `
+      <tr><td colspan="8" class="table-empty">
+        <div class="empty-state">
+          <div class="empty-state-icon">⚠️</div>
+          <h3>Failed to load properties</h3>
+          <p style="color: var(--error); font-weight: 500;">${servicesFetchError}</p>
+          <button class="btn btn-secondary icon-btn" onclick="initServicesPage()">
+            Retry
+          </button>
+        </div>
+      </td></tr>
+    `;
+    return;
+  }
 
   if (services.length === 0) {
     tableBody.innerHTML = `
@@ -986,6 +981,9 @@ function renderServiceRows(services) {
       : 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=120&q=80';
     const serviceId = service._id || service.id;
     const title = service.title || service.name;
+    const dateStr = service.createdAt || service.updatedAt
+      ? new Date(service.createdAt || service.updatedAt).toLocaleDateString()
+      : '-';
     row.innerHTML = `
       <td>
         <div class="name-cell" style="display: flex; align-items: center; gap: 0.85rem;">
@@ -997,8 +995,8 @@ function renderServiceRows(services) {
       <td><strong style="color: var(--primary);">${service.price || '-'}</strong></td>
       <td><span style="color: var(--text); font-weight: 500;">${service.location || '-'}</span></td>
       <td><span class="status-pill ${service.status === 'Active' ? 'status-active' : service.status === 'Paused' ? 'status-paused' : 'status-draft'}">${service.status || 'Draft'}</span></td>
-      ${(service.createdAt || service.updatedAt)}
-      <td class="created-by-col">${service.createdBy?.name || service.createdBy?.email}</td>
+      <td>${dateStr}</td>
+      <td class="created-by-col">${service.createdBy?.name || service.createdBy?.email || '-'}</td>
       <td class="table-actions">
         <button class="btn btn-secondary action-btn" type="button" onclick="editProperty('${serviceId}')">Edit</button>
         <button class="btn btn-tertiary action-btn" type="button" onclick="removeProperty('${serviceId}')">Delete</button>
@@ -1131,10 +1129,70 @@ async function loadAds() {
   try {
     const response = await fetchAds();
     adsData = Array.isArray(response) ? response : Array.isArray(response.data) ? response.data : [];
+    adsFetchError = null;
   } catch (error) {
     console.error('[LOAD ADS ERROR]', error);
     adsData = [];
+    adsFetchError = error.message;
   }
+}
+
+function renderAdCards(ads) {
+  const grid = document.getElementById('adGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  if (adsFetchError) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state-icon">⚠️</div>
+        <h3>Failed to load advertisements</h3>
+        <p style="color: var(--error); font-weight: 500;">${adsFetchError}</p>
+        <button class="btn btn-secondary btn-sm" onclick="initAdsPage()">
+          Retry
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  if (ads.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state-icon">📢</div>
+        <h3>No advertisements yet</h3>
+        <p>Create your first advertisement campaign using the form above.</p>
+        <button class="btn btn-primary" onclick="document.getElementById('adTitle')?.focus()">
+          Create Advertisement
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  ads.forEach(ad => {
+    const card = document.createElement('article');
+    card.className = 'ad-card';
+    const imageUrl = ad.image
+      ? (ad.image.startsWith('http') ? ad.image : `${API_BASE_URL}/uploads/${ad.image}`)
+      : 'https://images.unsplash.com/photo-1542744094-3a31f103e35f?auto=format&fit=crop&w=350&q=80';
+    const id = ad._id || ad.id;
+    card.innerHTML = `
+      <div class="ad-media" style="background-image: url('${imageUrl}'); background-size: cover; background-position: center; min-height: 180px;"></div>
+      <div class="ad-content">
+        <h3>${ad.title || ''}</h3>
+        <p>${ad.description || ''}</p>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+          <span style="font-weight: 700; color: var(--primary); font-size: 1.1rem;">${ad.price ? '$' + ad.price : ''}</span>
+          <div class="ad-actions">
+            <button class="btn btn-secondary btn-sm" onclick="editAd('${id}')">Edit</button>
+            <button class="btn btn-tertiary btn-sm" onclick="removeAd('${id}')">Delete</button>
+          </div>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
 }
 
 // ==========================================

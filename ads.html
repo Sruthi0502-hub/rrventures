@@ -18,10 +18,10 @@
       <nav class="side-nav" id="sidebar-nav">
         <a href="dashboard.html"><i data-lucide="home"></i>Overview</a>
         <a href="properties.html"><i data-lucide="tool"></i>Properties</a>
-        <a href="services.html"><i data-lucide="concierge-bell"></i>Services</a>
+        <a href="query.html"><i data-lucide="message-square"></i>Customer Queries</a>
 
         <a href="javascript:void(0);" class="nav-item" id="manageAdminsTab" data-tab="admins"
-          onclick="const m = document.getElementById('adminModal'); if(m){ m.style.setProperty('display', 'flex', 'important'); m.classList.add('active'); }">
+          onclick="document.getElementById('adminModal')?.style.setProperty('display', 'flex', 'important'); document.getElementById('adminModal')?.classList.add('active');">
           <i data-lucide="users"></i>
           <span>Create Admins</span>
         </a>
@@ -100,7 +100,7 @@
         <h3 style="margin: 0; color: #fff; font-size: 1.4rem; font-weight: 600; letter-spacing: 0.5px;">Create New Admin
           Account</h3>
         <button id="closeAdminModal" type="button"
-          onclick="const m = document.getElementById('adminModal'); if(m){ m.style.display='none'; m.classList.remove('active'); }"
+          onclick="document.getElementById('adminModal')?.style.setProperty('display', 'none'); document.getElementById('adminModal')?.classList.remove('active');"
           style="background: none; border: none; color: #a0aec0; font-size: 2.2rem; cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s;"
           onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a0aec0'">&times;</button>
       </div>
