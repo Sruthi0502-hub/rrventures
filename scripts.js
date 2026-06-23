@@ -352,11 +352,11 @@ async function createService(formData) {
 }
 
 async function updateService(id, formData) {
-  return await apiFetch(`/provideservices/${id}`, { method: 'PUT', body: formData });
+  return await apiFetch(`/provideservices/updateServices/${id}`, { method: 'PATCH', body: formData });
 }
 
 async function deleteService(id) {
-  return await apiFetch(`/provideservices/${id}`, { method: 'DELETE' });
+  return await apiFetch(`/provideservices/deletdServices/${id}`, { method: 'DELETE' });
 }
 
 // ==========================================
